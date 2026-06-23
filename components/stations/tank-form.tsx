@@ -1,0 +1,143 @@
+"use client"
+
+import { useState } from "react"
+import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { createTank, updateTank } from "@/app/dashboard/stations/actions"
+
+export function TankForm({ 
+  open, 
+  onOpenChange,
+  stationId,
+  fuelTypes,
+  initialData 
+}: { 
+  open: boolean
+  onOpenChange: (o: boolean) => void
+  stationId: number
+  fuelTypes: any[]
+  initialData?: any 
+}) {
+  const [loading, setLoading] = useState(false)
+  const [selectedFuelType, setSelectedFuelType] = useState<number>(initialData?.fuelTypeId || (fuelTypes[0]?.id || 0))
+  const [capacityTon, setCapacityTon] = useState<number>(initialData?.capacityTon || 0)
+
+  // Compute liters immediately for UI feedback
+  const fuel = fuelTypes.find(f => f.id === selectedFuelType)
+  const tonToLiter = fuel?.tonToLiter || 0
+  const computedLiters = capacityTon * tonToLiter
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setLoading(true)
+    
+    const formData = new FormData(e.currentTarget)
+    const name = formData.get("name") as string
+    const minAlertLevel = Number(formData.get("minAlertLevel")) || 0
+    
+    try {
+      if (initialData) {
+        await updateTank(initialData.id, { 
+          name, 
+          fuelTypeId: selectedFuelType,
+          capacityTon,
+          minAlertLevel
+        })
+        toast.success("تم تعديل الخزان بنجاح")
+      } else {
+        await createTank({ 
+          name, 
+          stationId,
+          fuelTypeId: selectedFuelType,
+          capacityTon,
+          minAlertLevel
+        })
+        toast.success("تم إضافة الخزان بنجاح")
+      }
+      onOpenChange(false)
+    } catch (err: any) {
+      toast.error(err.message || "حدث خطأ غير متوقع")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>{initialData ? "تعديل بيانات الخزان" : "إضافة خزان جديد"}</SheetTitle>
+          <SheetDescription>
+            سيتم احتساب السعة باللتر تلقائياً بناءً على معامل تحويل نوع الوقود المختار.
+          </SheetDescription>
+        </SheetHeader>
+        
+        <form onSubmit={onSubmit} className="space-y-6 py-6">
+          <div className="space-y-2">
+            <Label htmlFor="name">اسم الخزان</Label>
+            <Input id="name" name="name" required defaultValue={initialData?.name} placeholder="مثال: خزان أ" />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="fuelType">نوع الوقود</Label>
+            <select
+              id="fuelType"
+              value={selectedFuelType}
+              onChange={(e) => setSelectedFuelType(Number(e.target.value))}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              required
+            >
+              {fuelTypes.map(f => (
+                <option key={f.id} value={f.id}>{f.name} (المعامل: {f.tonToLiter})</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="capacityTon">السعة (بالطن)</Label>
+            <Input 
+              id="capacityTon" 
+              type="number" 
+              step="0.01" 
+              required 
+              value={capacityTon || ''} 
+              onChange={e => setCapacityTon(Number(e.target.value))} 
+              placeholder="0.00" 
+              dir="ltr"
+              className="text-right"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>السعة باللتر (حساب تلقائي)</Label>
+            <div className="h-9 w-full rounded-md border border-input bg-secondary/50 px-3 py-2 text-sm text-muted-foreground" dir="ltr">
+              {computedLiters.toLocaleString()}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="minAlertLevel">حد التنبيه الأدنى (باللتر)</Label>
+            <Input 
+              id="minAlertLevel" 
+              name="minAlertLevel"
+              type="number" 
+              defaultValue={initialData?.minAlertLevel || 0} 
+              dir="ltr"
+              className="text-right"
+            />
+            <p className="text-xs text-muted-foreground">يُصدر النظام تنبيهاً إذا انخفض الرصيد عن هذا الحد</p>
+          </div>
+          
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+            {initialData ? "حفظ التعديلات" : "إضافة الخزان"}
+          </Button>
+        </form>
+      </SheetContent>
+    </Sheet>
+  )
+}

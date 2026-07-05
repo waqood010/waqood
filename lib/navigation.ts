@@ -2,11 +2,7 @@ import {
   LayoutDashboard,
   Fuel,
   Building2,
-  Container,
   TruckIcon,
-  Flame,
-  Ruler,
-  ClipboardList,
   Droplets,
   PackagePlus,
   Users,
@@ -39,13 +35,9 @@ export const navGroups: NavGroup[] = [
   {
     label: "إدارة الوقود",
     items: [
-      { title: "أنواع الوقود", href: "/dashboard/fuel-types", icon: Flame },
       { title: "المحطات", href: "/dashboard/stations", icon: Building2 },
-      { title: "الخزانات", href: "/dashboard/tanks", icon: Container },
       { title: "وارد الوقود", href: "/dashboard/fuel-supplies", icon: TruckIcon },
       { title: "استهلاك الوقود", href: "/dashboard/fuel-consumption", icon: Fuel },
-      { title: "قياسات الخزانات", href: "/dashboard/measurements", icon: Ruler },
-      { title: "العهدة اليومية", href: "/dashboard/daily-balances", icon: ClipboardList },
     ],
   },
   {

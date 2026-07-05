@@ -1,18 +1,14 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Cairo, Geist_Mono } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
-const cairo = Cairo({
-  variable: '--font-cairo',
-  subsets: ['arabic', 'latin'],
-  weight: ['400', '500', '600', '700', '800'],
-})
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
+const cairo = {
+  variable: 'font-cairo',
+}
+const geistMono = {
+  variable: 'font-geist-mono',
+}
 
 export const metadata: Metadata = {
   title: 'نظام إدارة الوقود والزيوت',

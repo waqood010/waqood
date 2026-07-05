@@ -20,7 +20,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex w-full min-h-svh bg-secondary/20">
+      <div dir="rtl" className="flex w-full min-h-svh bg-secondary/20">
         <AppSidebar role={role} />
         
         <div className="flex-1 flex flex-col min-w-0">

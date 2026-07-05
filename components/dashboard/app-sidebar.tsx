@@ -24,12 +24,12 @@ export function AppSidebar({ role }: { role: string }) {
   const pathname = usePathname()
 
   return (
-    <Sidebar side="right" variant="sidebar" collapsible="icon">
+    <Sidebar side="right" variant="sidebar" collapsible="icon" dir="rtl">
       <SidebarHeader className="border-b border-border/50 py-4">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="hover:bg-transparent">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
                 <ShieldCheck className="size-5" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none px-2 text-right w-full overflow-hidden">
@@ -43,7 +43,6 @@ export function AppSidebar({ role }: { role: string }) {
 
       <SidebarContent className="px-2 py-4 gap-6">
         {navGroups.map((group) => {
-          // Filter out items the user shouldn't see
           const visibleItems = group.items.filter(
             (item) => !item.adminOnly || role === "admin"
           )
@@ -52,7 +51,7 @@ export function AppSidebar({ role }: { role: string }) {
 
           return (
             <SidebarGroup key={group.label} className="pt-0">
-              <SidebarGroupLabel className="text-right flex items-center px-2 mb-2 text-xs font-semibold text-muted-foreground">
+              <SidebarGroupLabel className="text-right flex items-center justify-end px-2 mb-2 text-xs font-semibold text-muted-foreground">
                 {group.label}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -62,15 +61,15 @@ export function AppSidebar({ role }: { role: string }) {
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
-                          asChild
+                          render={<Link href={item.href} className="flex items-center w-full" />}
                           isActive={isActive}
                           tooltip={item.title}
-                          className="h-10 text-right justify-start gap-3 flex-row-reverse"
+                          className="h-10 text-right justify-end gap-3"
                         >
-                          <Link href={item.href}>
+                          <span className="font-medium flex-1 text-right">{item.title}</span>
+                          <span className="w-7 flex items-center justify-center shrink-0">
                             <item.icon className="size-4 opacity-70" />
-                            <span className="font-medium">{item.title}</span>
-                          </Link>
+                          </span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     )
@@ -87,7 +86,7 @@ export function AppSidebar({ role }: { role: string }) {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="تسجيل الخروج"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive h-10 gap-3 justify-start flex-row-reverse text-right"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive h-10 gap-3 justify-end text-right"
               onClick={async () => {
                 await authClient.signOut({
                   fetchOptions: {
@@ -98,8 +97,10 @@ export function AppSidebar({ role }: { role: string }) {
                 })
               }}
             >
-              <LogOut className="size-4" />
-              <span className="font-medium">تسجيل الخروج</span>
+              <span className="font-medium flex-1 text-right">تسجيل الخروج</span>
+              <span className="w-7 flex items-center justify-center shrink-0">
+                <LogOut className="size-4" />
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

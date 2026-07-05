@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,32 +45,36 @@ export function StationForm({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-full sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>{initialData ? "تعديل المحطة" : "إضافة محطة جديدة"}</SheetTitle>
-          <SheetDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full sm:max-w-md overflow-hidden">
+        <DialogHeader>
+          <DialogTitle>{initialData ? "تعديل المحطة" : "إضافة محطة جديدة"}</DialogTitle>
+          <DialogDescription>
             أدخل بيانات المحطة الأساسية هنا. يمكنك إضافة الخزانات لاحقاً.
-          </SheetDescription>
-        </SheetHeader>
-        
-        <form onSubmit={onSubmit} className="space-y-6 py-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">اسم المحطة</Label>
-            <Input id="name" name="name" required defaultValue={initialData?.name} placeholder="مثال: المحطة الرئيسية" />
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={onSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">اسم المحطة</Label>
+              <Input id="name" name="name" required defaultValue={initialData?.name} placeholder="مثال: المحطة الرئيسية" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">ملاحظات (اختياري)</Label>
+              <Input id="notes" name="notes" defaultValue={initialData?.notes} placeholder="أي ملاحظات إضافية..." />
+            </div>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="notes">ملاحظات (اختياري)</Label>
-            <Input id="notes" name="notes" defaultValue={initialData?.notes} placeholder="أي ملاحظات إضافية..." />
-          </div>
-          
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
-            {initialData ? "حفظ التعديلات" : "إضافة المحطة"}
-          </Button>
+
+          <DialogFooter>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+              {initialData ? "حفظ التعديلات" : "إضافة المحطة"}
+            </Button>
+          </DialogFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }

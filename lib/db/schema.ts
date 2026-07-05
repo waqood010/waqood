@@ -12,7 +12,8 @@ export const user = pgTable("user", {
   // App-specific fields managed via Better Auth additionalFields
   role: text("role").notNull().default("user"), // "admin" | "user"
   phone: text("phone"),
-  username: text("username"),
+  username: text("username").unique(),
+  displayUsername: text("displayUsername"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
@@ -173,11 +174,12 @@ export const oilSupplies = pgTable("oil_supplies", {
   id: serial("id").primaryKey(),
   oilId: integer("oil_id").notNull(),
   quantity: doublePrecision("quantity").notNull(),
+  price: doublePrecision("price").notNull().default(0),
   supplier: text("supplier"),
   invoiceNumber: text("invoice_number"),
   date: timestamp("date").notNull().defaultNow(),
   notes: text("notes"),
-  userId: text("userId").notNull(),
+  userId: text("userId"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 

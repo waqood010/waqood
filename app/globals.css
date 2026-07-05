@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Geist+Mono:wght@100..900&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
@@ -49,6 +50,8 @@
 }
 
 :root {
+  --font-cairo: 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-geist-mono: 'Geist Mono', monospace;
   color-scheme: light;
   --background: oklch(0.985 0.005 180);
   --foreground: oklch(0.22 0.02 200);

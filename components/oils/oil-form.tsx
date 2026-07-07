@@ -66,7 +66,7 @@ export function OilForm({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto">
+      <SheetContent side="center" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
           <SheetTitle>{initialData ? "تعديل بيانات الصنف" : "إضافة صنف زيت/شحم جديد"}</SheetTitle>
           <SheetDescription>

@@ -49,7 +49,7 @@ export function ConsumerForm({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-full sm:max-w-md">
+      <SheetContent side="center" className="w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{initialData ? "تعديل بيانات الجهة" : "إضافة جهة مستهلكة جديدة"}</SheetTitle>
           <SheetDescription>

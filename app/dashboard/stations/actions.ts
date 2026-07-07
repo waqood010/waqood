@@ -9,23 +9,35 @@ import { requireUserId } from "@/lib/session"
 export async function getStations() {
   await requireUserId()
   
-  // We need to fetch stations and their tank counts
+  // Fetch all stations
   const allStations = await db.select().from(stations)
   
-  // Fetch tank counts per station
-  const tankCounts = await db
+  // Fetch all tanks with their details
+  const allTanks = await db
     .select({
+      id: tanks.id,
       stationId: tanks.stationId,
-      count: count(tanks.id)
+      name: tanks.name,
+      capacityTon: tanks.capacityTon,
+      capacityLiter: tanks.capacityLiter,
+      currentBalance: tanks.currentBalance,
+      minAlertLevel: tanks.minAlertLevel,
+      fuelTypeId: tanks.fuelTypeId,
     })
     .from(tanks)
-    .groupBy(tanks.stationId)
-    
-  const tankCountMap = new Map(tankCounts.map(tc => [tc.stationId, tc.count]))
+
+  // Group tanks by station
+  const tanksByStation = new Map<number, typeof allTanks>()
+  allTanks.forEach(tank => {
+    if (!tanksByStation.has(tank.stationId)) {
+      tanksByStation.set(tank.stationId, [])
+    }
+    tanksByStation.get(tank.stationId)!.push(tank)
+  })
 
   return allStations.map(station => ({
     ...station,
-    tanksCount: tankCountMap.get(station.id) || 0
+    tanks: tanksByStation.get(station.id) || [],
   }))
 }
 

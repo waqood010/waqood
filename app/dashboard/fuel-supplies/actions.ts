@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { fuelSupplies, tanks, stations, fuelTypes } from "@/lib/db/schema"
+import { fuelSupplies, fuelSupplyDistributions, tanks, stations, fuelTypes } from "@/lib/db/schema"
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { requireUserId } from "@/lib/session"
@@ -44,23 +44,25 @@ async function getNextDocumentNumber(): Promise<number> {
   return (result[0]?.max ?? 0) + 1
 }
 
+// ─── Get Next Import Number for Station ──────────────────────────────────────
+
+export async function getNextImportNumber(stationId: number): Promise<number> {
+  const result = await db
+    .select({ max: sql<number>`COALESCE(MAX(import_number), 0)` })
+    .from(fuelSupplyDistributions)
+    .where(eq(fuelSupplyDistributions.stationId, stationId))
+  return (result[0]?.max ?? 0) + 1
+}
+
 // ─── Read ────────────────────────────────────────────────────────────────────
 
-export async function getFuelSupplies(filters?: {
-  stationId?: number
-  tankId?: number
-  fuelTypeId?: number
-  from?: Date
-  to?: Date
-}) {
+export async function getFuelSupplies(monthDate?: Date) {
   await requireUserId()
 
-  const conditions = []
-  if (filters?.stationId) conditions.push(eq(fuelSupplies.stationId, filters.stationId))
-  if (filters?.tankId) conditions.push(eq(fuelSupplies.tankId, filters.tankId))
-  if (filters?.fuelTypeId) conditions.push(eq(fuelSupplies.fuelTypeId, filters.fuelTypeId))
-  if (filters?.from) conditions.push(gte(fuelSupplies.date, filters.from))
-  if (filters?.to) conditions.push(lte(fuelSupplies.date, filters.to))
+  // Use current month if not specified
+  const date = monthDate || new Date()
+  const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1)
+  const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59)
 
   const rows = await db
     .select({
@@ -68,52 +70,115 @@ export async function getFuelSupplies(filters?: {
       documentNumber: fuelSupplies.documentNumber,
       invoiceNumber: fuelSupplies.invoiceNumber,
       supplierCompany: fuelSupplies.supplierCompany,
-      quantity: fuelSupplies.quantity,
+      totalQuantity: fuelSupplies.totalQuantity,
       unitPrice: fuelSupplies.unitPrice,
       totalPrice: fuelSupplies.totalPrice,
       date: fuelSupplies.date,
       userId: fuelSupplies.userId,
-      station: { id: stations.id, name: stations.name },
-      tank: { id: tanks.id, name: tanks.name },
       fuelType: { id: fuelTypes.id, name: fuelTypes.name },
     })
     .from(fuelSupplies)
-    .innerJoin(stations, eq(fuelSupplies.stationId, stations.id))
-    .innerJoin(tanks, eq(fuelSupplies.tankId, tanks.id))
     .innerJoin(fuelTypes, eq(fuelSupplies.fuelTypeId, fuelTypes.id))
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(
+      and(
+        gte(fuelSupplies.date, startOfMonth),
+        lte(fuelSupplies.date, endOfMonth)
+      )
+    )
     .orderBy(desc(fuelSupplies.date))
 
   return rows
 }
 
+// ─── Get Supply Distributions ────────────────────────────────────────────────
+
+export async function getSupplyDistributions(supplyId: number) {
+  await requireUserId()
+
+  const distributions = await db
+    .select({
+      id: fuelSupplyDistributions.id,
+      supplyId: fuelSupplyDistributions.supplyId,
+      stationId: fuelSupplyDistributions.stationId,
+      tankId: fuelSupplyDistributions.tankId,
+      quantity: fuelSupplyDistributions.quantity,
+      importNumber: fuelSupplyDistributions.importNumber,
+      station: { id: stations.id, name: stations.name },
+      tank: { id: tanks.id, name: tanks.name },
+      fuelType: { id: fuelTypes.id, name: fuelTypes.name },
+    })
+    .from(fuelSupplyDistributions)
+    .innerJoin(stations, eq(fuelSupplyDistributions.stationId, stations.id))
+    .innerJoin(tanks, eq(fuelSupplyDistributions.tankId, tanks.id))
+    .innerJoin(fuelTypes, eq(tanks.fuelTypeId, fuelTypes.id))
+    .where(eq(fuelSupplyDistributions.supplyId, supplyId))
+    .orderBy(fuelSupplyDistributions.stationId)
+
+  return distributions
+}
+
+// ─── Get Full Supply Details ─────────────────────────────────────────────────
+
+export async function getSupplyWithDistributions(supplyId: number) {
+  await requireUserId()
+
+  const supply = await db.query.fuelSupplies.findFirst({
+    where: eq(fuelSupplies.id, supplyId),
+  })
+
+  if (!supply) throw new Error("السجل غير موجود")
+
+  const distributions = await getSupplyDistributions(supplyId)
+
+  return {
+    ...supply,
+    distributions,
+  }
+}
+
 // ─── Create ──────────────────────────────────────────────────────────────────
 
 export async function createFuelSupply(data: {
-  stationId: number
-  tankId: number
   fuelTypeId: number
-  quantity: number
+  totalQuantity: number
   unitPrice: number
   invoiceNumber?: string
   supplierCompany?: string
   date: Date
+  distributions: Array<{
+    stationId: number
+    tankId: number
+    quantity: number
+    importNumber: number
+  }>
 }) {
   const userId = await requireUserId()
 
-  // Validate: check capacity
-  const tank = await db.query.tanks.findFirst({ where: eq(tanks.id, data.tankId) })
-  if (!tank) throw new Error("الخزان غير موجود")
-
-  const freeCapacity = tank.capacityLiter - tank.currentBalance
-  if (data.quantity > freeCapacity) {
+  // Validate: sum of distribution quantities should equal totalQuantity
+  const sumQuantity = data.distributions.reduce((sum, d) => sum + d.quantity, 0)
+  if (sumQuantity !== data.totalQuantity) {
     throw new Error(
-      `الكمية المطلوبة (${data.quantity.toLocaleString()} لتر) تتجاوز السعة المتاحة (${freeCapacity.toLocaleString()} لتر)`
+      `مجموع الكميات الموزعة (${sumQuantity.toLocaleString()}) يجب أن يساوي الكمية الإجمالية (${data.totalQuantity.toLocaleString()})`
     )
   }
 
+  // Validate each distribution: check capacity
+  for (const dist of data.distributions) {
+    const tank = await db.query.tanks.findFirst({
+      where: eq(tanks.id, dist.tankId),
+    })
+    if (!tank) throw new Error(`الخزان غير موجود: ${dist.tankId}`)
+
+    const freeCapacity = tank.capacityLiter - tank.currentBalance
+    if (dist.quantity > freeCapacity) {
+      throw new Error(
+        `الكمية المطلوبة للخزان "${tank.name}" (${dist.quantity.toLocaleString()} لتر) تتجاوز السعة المتاحة (${freeCapacity.toLocaleString()} لتر)`
+      )
+    }
+  }
+
   const documentNumber = await getNextDocumentNumber()
-  const totalPrice = data.quantity * data.unitPrice
+  const totalPrice = data.totalQuantity * data.unitPrice
 
   // Create supply record
   const [supply] = await db
@@ -122,10 +187,8 @@ export async function createFuelSupply(data: {
       documentNumber,
       invoiceNumber: data.invoiceNumber || null,
       supplierCompany: data.supplierCompany || null,
-      stationId: data.stationId,
-      tankId: data.tankId,
       fuelTypeId: data.fuelTypeId,
-      quantity: data.quantity,
+      totalQuantity: data.totalQuantity,
       unitPrice: data.unitPrice,
       totalPrice,
       date: data.date,
@@ -133,11 +196,27 @@ export async function createFuelSupply(data: {
     })
     .returning()
 
-  // Update tank balance
-  await db
-    .update(tanks)
-    .set({ currentBalance: tank.currentBalance + data.quantity })
-    .where(eq(tanks.id, data.tankId))
+  // Create distributions
+  for (const dist of data.distributions) {
+    await db.insert(fuelSupplyDistributions).values({
+      supplyId: supply.id,
+      stationId: dist.stationId,
+      tankId: dist.tankId,
+      quantity: dist.quantity,
+      importNumber: dist.importNumber,
+    })
+
+    // Update tank balance
+    const tank = await db.query.tanks.findFirst({
+      where: eq(tanks.id, dist.tankId),
+    })
+    if (tank) {
+      await db
+        .update(tanks)
+        .set({ currentBalance: tank.currentBalance + dist.quantity })
+        .where(eq(tanks.id, dist.tankId))
+    }
+  }
 
   revalidatePath("/dashboard/fuel-supplies")
   revalidatePath("/dashboard")
@@ -154,16 +233,27 @@ export async function deleteFuelSupply(id: number, role: string) {
   })
   if (!supply) throw new Error("السجل غير موجود")
 
-  const tank = await db.query.tanks.findFirst({ where: eq(tanks.id, supply.tankId) })
-  if (!tank) throw new Error("الخزان غير موجود")
+  // Get all distributions
+  const distributions = await db.query.fuelSupplyDistributions.findMany({
+    where: eq(fuelSupplyDistributions.supplyId, id),
+  })
 
-  // Restore tank balance
-  await db
-    .update(tanks)
-    .set({ currentBalance: Math.max(0, tank.currentBalance - supply.quantity) })
-    .where(eq(tanks.id, supply.tankId))
+  // Restore tank balances
+  for (const dist of distributions) {
+    const tank = await db.query.tanks.findFirst({
+      where: eq(tanks.id, dist.tankId),
+    })
+    if (tank) {
+      await db
+        .update(tanks)
+        .set({ currentBalance: Math.max(0, tank.currentBalance - dist.quantity) })
+        .where(eq(tanks.id, dist.tankId))
+    }
+  }
 
+  // Delete supply (cascade delete will handle distributions)
   await db.delete(fuelSupplies).where(eq(fuelSupplies.id, id))
+
   revalidatePath("/dashboard/fuel-supplies")
   revalidatePath("/dashboard")
 }

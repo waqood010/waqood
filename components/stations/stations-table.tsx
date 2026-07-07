@@ -37,6 +37,26 @@ export function StationsTable({ initialStations, fuelTypes, isAdmin }: { initial
 
   const filteredStations = stations.filter(s => s.name.includes(search))
 
+  // Calculate tank stats for each station
+  const getStationTankStats = (station: any) => {
+    let totalCapacity = 0
+    let totalCurrent = 0
+
+    if (station.tanks && Array.isArray(station.tanks)) {
+      station.tanks.forEach((tank: any) => {
+        totalCapacity += tank.capacityLiter || 0
+        totalCurrent += tank.currentBalance || 0
+      })
+    }
+
+    return {
+      totalCapacity,
+      totalCurrent,
+      totalEmpty: totalCapacity - totalCurrent,
+      tankCount: station.tanks?.length || 0
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -65,13 +85,16 @@ export function StationsTable({ initialStations, fuelTypes, isAdmin }: { initial
                 <th className="px-4 py-3 font-medium">اسم المحطة</th>
                 <th className="px-4 py-3 font-medium">ملاحظات</th>
                 <th className="px-4 py-3 font-medium text-center">الخزانات</th>
+                <th className="px-4 py-3 font-medium text-center">اجمالي سعة الخزانات</th>
+                <th className="px-4 py-3 font-medium text-center">اجمالي الكمية الموجودة</th>
+                <th className="px-4 py-3 font-medium text-center">اجمالي الفارغ</th>
                 {isAdmin && <th className="px-4 py-3 font-medium text-left">الإجراءات</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filteredStations.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={isAdmin ? 8 : 7} className="px-4 py-8 text-center text-muted-foreground">
                     لا يوجد محطات مطابقة للبحث
                   </td>
                 </tr>
@@ -98,8 +121,20 @@ export function StationsTable({ initialStations, fuelTypes, isAdmin }: { initial
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="inline-flex items-center justify-center bg-secondary text-secondary-foreground px-2 py-1 rounded-full text-xs font-medium min-w-8">
-                          {station.tanksCount}
+                          {getStationTankStats(station).tankCount}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-center text-sm">
+                        <span className="font-semibold">{getStationTankStats(station).totalCapacity.toLocaleString()}</span>
+                        <span className="text-muted-foreground text-xs ml-1">لتر</span>
+                      </td>
+                      <td className="px-4 py-3 text-center text-sm">
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">{getStationTankStats(station).totalCurrent.toLocaleString()}</span>
+                        <span className="text-muted-foreground text-xs ml-1">لتر</span>
+                      </td>
+                      <td className="px-4 py-3 text-center text-sm">
+                        <span className="font-semibold text-amber-600 dark:text-amber-400">{getStationTankStats(station).totalEmpty.toLocaleString()}</span>
+                        <span className="text-muted-foreground text-xs ml-1">لتر</span>
                       </td>
                       {isAdmin && (
                         <td className="px-4 py-3 text-left">

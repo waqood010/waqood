@@ -28,7 +28,7 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
+        "fixed inset-0 z-50 flex items-center justify-center bg-black/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
         className
       )}
       {...props}
@@ -50,7 +50,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 flex w-full max-w-[90vw] sm:max-w-md translate-x-[-50%] translate-y-[-50%] flex-col gap-4 bg-card text-sm text-foreground shadow-2xl shadow-black/10 transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95 overflow-hidden border border-border/70 p-6 rounded-2xl",
+          "fixed left-1/2 top-1/2 z-50 flex w-full max-w-[90vw] sm:max-w-md max-h-[90vh] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 bg-card text-sm text-foreground shadow-2xl shadow-black/10 transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:scale-95 data-starting-style:scale-95 overflow-hidden border border-border/70 p-6 rounded-2xl",
           className
         )}
         {...props}
@@ -60,11 +60,11 @@ function DialogContent({
           <DialogPrimitive.Close
             data-slot="dialog-close"
             render={
-              <Button
-                variant="ghost"
-                className="absolute top-4 right-4 rounded-full border border-border/60 bg-background/80 shadow-sm hover:bg-background"
-                size="icon-sm"
-              />
+                <Button
+                  variant="ghost"
+                  className="absolute top-4 right-4 rtl:right-auto rtl:left-4 rounded-full border border-border/60 bg-background/80 shadow-sm hover:bg-background"
+                  size="icon-sm"
+                />
             }
           >
             <XIcon className="size-4" />

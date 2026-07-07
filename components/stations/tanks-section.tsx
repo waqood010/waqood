@@ -113,6 +113,12 @@ export function TanksSection({ stationId, fuelTypes, isAdmin }: { stationId: num
                       style={{ width: `${Math.min(100, Math.max(0, fillPercentage))}%` }}
                     />
                   </div>
+                  <div className="flex justify-between text-xs font-medium mt-2 pt-1 border-t border-border">
+                    <span>الفارغ</span>
+                    <span className="text-amber-600 dark:text-amber-400">
+                      {(tank.capacityLiter - tank.currentBalance).toLocaleString()} لتر
+                    </span>
+                  </div>
                   {isLow && <div className="text-[10px] text-destructive">تنبيه: الرصيد أقل من الحد الأدنى ({tank.minAlertLevel})</div>}
                 </div>
               </div>

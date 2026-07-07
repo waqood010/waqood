@@ -78,7 +78,7 @@ export function FuelConsumptionForm({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto">
+      <SheetContent side="center" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
           <SheetTitle>تسجيل استهلاك وقود</SheetTitle>
           <SheetDescription>

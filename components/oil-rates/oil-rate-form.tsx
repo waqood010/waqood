@@ -55,7 +55,7 @@ export function OilRateForm({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-full sm:max-w-md">
+      <SheetContent side="center" className="w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{initialData ? "تعديل معدل الاستهلاك" : "إضافة معدل استهلاك جديد"}</SheetTitle>
           <SheetDescription>

@@ -98,14 +98,23 @@ export const fuelSupplies = pgTable("fuel_supplies", {
   documentNumber: integer("document_number"), // رقم المستند (سنوي)
   invoiceNumber: text("invoice_number"),
   supplierCompany: text("supplier_company"),
-  stationId: integer("station_id").notNull(),
-  tankId: integer("tank_id").notNull(),
   fuelTypeId: integer("fuel_type_id").notNull(),
-  quantity: doublePrecision("quantity").notNull(), // باللتر
+  totalQuantity: doublePrecision("total_quantity").notNull(), // إجمالي الكمية الواردة باللتر
   unitPrice: doublePrecision("unit_price").notNull().default(0),
-  totalPrice: doublePrecision("total_price").notNull().default(0),
+  totalPrice: doublePrecision("total_price").notNull().default(0), // مجموع (الكمية × السعر) لجميع المحطات
   date: timestamp("date").notNull().defaultNow(),
   userId: text("userId").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+})
+
+// توزيع وارد الوقود على المحطات
+export const fuelSupplyDistributions = pgTable("fuel_supply_distributions", {
+  id: serial("id").primaryKey(),
+  supplyId: integer("supply_id").notNull().references(() => fuelSupplies.id, { onDelete: "cascade" }),
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  tankId: integer("tank_id").notNull().references(() => tanks.id),
+  quantity: doublePrecision("quantity").notNull(), // الكمية الموزعة لهذه المحطة باللتر
+  importNumber: integer("import_number").notNull(), // رقم التوريدة (متسلسل لكل محطة)
   createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 

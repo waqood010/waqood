@@ -207,6 +207,7 @@ export const oilConsumptionRates = pgTable("oil_consumption_rates", {
   consumerId: integer("consumer_id").notNull(),
   oilId: integer("oil_id").notNull(),
   rate: doublePrecision("rate").notNull().default(0),
+  unit: text("unit").notNull().default("عبوة"),
   period: text("period").notNull().default("monthly"), // weekly | monthly
   createdAt: timestamp("created_at").notNull().defaultNow(),
 })

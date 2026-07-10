@@ -25,10 +25,7 @@ export function ConsumersTable({ initialData, isAdmin }: { initialData: any[], i
     }
   }
 
-  const filteredData = data.filter((d) => 
-    d.name.includes(search) || 
-    (d.type && d.type.includes(search))
-  )
+  const filteredData = data.filter((d) => d.name.includes(search))
 
   return (
     <div className="space-y-4">
@@ -55,7 +52,6 @@ export function ConsumersTable({ initialData, isAdmin }: { initialData: any[], i
             <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
               <tr>
                 <th className="px-4 py-3 font-medium">الجهة المستهلكة</th>
-                <th className="px-4 py-3 font-medium">النوع</th>
                 <th className="px-4 py-3 font-medium">ملاحظات</th>
                 {isAdmin && <th className="px-4 py-3 font-medium text-left">الإجراءات</th>}
               </tr>
@@ -63,7 +59,7 @@ export function ConsumersTable({ initialData, isAdmin }: { initialData: any[], i
             <tbody className="divide-y divide-border">
               {filteredData.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={isAdmin ? 3 : 2} className="px-4 py-8 text-center text-muted-foreground">
                     لا يوجد جهات مطابقة للبحث
                   </td>
                 </tr>
@@ -73,11 +69,6 @@ export function ConsumersTable({ initialData, isAdmin }: { initialData: any[], i
                     <td className="px-4 py-3 font-medium flex items-center gap-2">
                       <Users className="size-4 text-primary" />
                       {item.name}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary text-secondary-foreground">
-                        {item.type || "-"}
-                      </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">
                       {item.notes || "-"}

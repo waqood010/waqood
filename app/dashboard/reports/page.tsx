@@ -13,24 +13,27 @@ export default async function ReportsPage() {
     .select({
       stationName: stations.name,
       fuelTypeName: fuelTypes.name,
+      // group by day so we can show a date per row
+      date: sql<string>`date_trunc('day', ${fuelConsumption.date})`,
       totalQuantity: sql<number>`SUM(${fuelConsumption.quantity})`
     })
     .from(fuelConsumption)
     .innerJoin(stations, eq(fuelConsumption.stationId, stations.id))
     .innerJoin(fuelTypes, eq(fuelConsumption.fuelTypeId, fuelTypes.id))
-    .groupBy(stations.name, fuelTypes.name)
+    .groupBy(stations.name, fuelTypes.name, sql`date_trunc('day', ${fuelConsumption.date})`)
 
   // Aggregate oil dispensed per consumer
   const oilReport = await db
     .select({
       consumerName: consumers.name,
       oilName: oils.name,
+      date: sql<string>`date_trunc('day', ${oilTransactions.date})`,
       totalQuantity: sql<number>`SUM(${oilTransactions.quantity})`
     })
     .from(oilTransactions)
     .innerJoin(consumers, eq(oilTransactions.consumerId, consumers.id))
     .innerJoin(oils, eq(oilTransactions.oilId, oils.id))
-    .groupBy(consumers.name, oils.name)
+    .groupBy(consumers.name, oils.name, sql`date_trunc('day', ${oilTransactions.date})`)
 
   return (
     <div className="flex flex-col gap-6">
@@ -54,6 +57,7 @@ export default async function ReportsPage() {
               <table className="w-full caption-bottom text-sm text-right">
                 <thead className="[&_tr]:border-b">
                   <tr className="border-b transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">التاريخ</th>
                     <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">المحطة</th>
                     <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">النوع</th>
                     <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">إجمالي الكمية (لتر)</th>
@@ -62,6 +66,7 @@ export default async function ReportsPage() {
                 <tbody className="[&_tr:last-child]:border-0">
                   {fuelReport.map((row, i) => (
                     <tr key={i} className="border-b transition-colors hover:bg-muted/50">
+                      <td className="p-2 align-middle">{row.date ? new Date(row.date).toLocaleDateString() : "-"}</td>
                       <td className="p-2 align-middle font-medium">{row.stationName}</td>
                       <td className="p-2 align-middle">{row.fuelTypeName}</td>
                       <td className="p-2 align-middle">{row.totalQuantity?.toLocaleString() || 0}</td>
@@ -82,6 +87,7 @@ export default async function ReportsPage() {
               <table className="w-full caption-bottom text-sm text-right">
                 <thead className="[&_tr]:border-b">
                   <tr className="border-b transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">التاريخ</th>
                     <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">الجهة</th>
                     <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">الصنف</th>
                     <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">إجمالي الكمية</th>
@@ -90,6 +96,7 @@ export default async function ReportsPage() {
                 <tbody className="[&_tr:last-child]:border-0">
                   {oilReport.map((row, i) => (
                     <tr key={i} className="border-b transition-colors hover:bg-muted/50">
+                      <td className="p-2 align-middle">{row.date ? new Date(row.date).toLocaleDateString() : "-"}</td>
                       <td className="p-2 align-middle font-medium">{row.consumerName}</td>
                       <td className="p-2 align-middle">{row.oilName}</td>
                       <td className="p-2 align-middle">{row.totalQuantity?.toLocaleString() || 0}</td>

@@ -2,16 +2,47 @@
 
 import { db } from "@/lib/db"
 import { oilTransactions, oils, consumers } from "@/lib/db/schema"
-import { eq, desc, sql } from "drizzle-orm"
+import { eq, desc, sql, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { requireUserId } from "@/lib/session"
 import { logAction } from "@/lib/db/audit"
 
-export async function getOilTransactions() {
+export async function getOilTransactions(filters?: {
+  consumerId?: number
+  oilId?: number
+  from?: Date
+  to?: Date
+  search?: string
+  page?: number
+  pageSize?: number
+}) {
   await requireUserId()
-  
-  return await db
+
+  const conditions: any[] = []
+  if (filters?.consumerId) conditions.push(eq(oilTransactions.consumerId, filters.consumerId))
+  if (filters?.oilId) conditions.push(eq(oilTransactions.oilId, filters.oilId))
+  if (filters?.from) conditions.push(sql`${oilTransactions.date} >= ${filters.from}`)
+  if (filters?.to) conditions.push(sql`${oilTransactions.date} <= ${filters.to}`)
+  if (filters?.search) {
+    const term = `%${filters.search}%`
+    conditions.push(sql`(
+      ${oils.name} ILIKE ${term} OR
+      ${consumers.name} ILIKE ${term} OR
+      ${oilTransactions.dispenserName} ILIKE ${term} OR
+      ${oilTransactions.receiverName} ILIKE ${term} OR
+      CAST(${oilTransactions.serialNumber} AS TEXT) ILIKE ${term}
+    )`)
+  }
+
+  const page = filters?.page && filters.page > 0 ? filters.page : 1
+  const pageSize = filters?.pageSize && filters.pageSize > 0 ? filters.pageSize : 25
+  const limit = pageSize + 1 // fetch one extra to detect next page
+  const offset = (page - 1) * pageSize
+
+  const rows = await db
     .select({
+      oilId: oilTransactions.oilId,
+      consumerId: oilTransactions.consumerId,
       id: oilTransactions.id,
       date: oilTransactions.date,
       quantity: oilTransactions.quantity,
@@ -26,7 +57,14 @@ export async function getOilTransactions() {
     .from(oilTransactions)
     .innerJoin(oils, eq(oilTransactions.oilId, oils.id))
     .innerJoin(consumers, eq(oilTransactions.consumerId, consumers.id))
+    .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(desc(oilTransactions.date))
+    .limit(limit)
+    .offset(offset)
+
+  const hasMore = rows.length > pageSize
+  const data = rows.slice(0, pageSize)
+  return { data, hasMore, page, pageSize }
 }
 
 export async function getConsumersAndOils() {

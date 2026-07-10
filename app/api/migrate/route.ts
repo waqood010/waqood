@@ -31,6 +31,32 @@ export async function GET() {
         );
       `
     },
+    {
+      name: "Add total_quantity to fuel_supplies",
+      query: `ALTER TABLE fuel_supplies ADD COLUMN IF NOT EXISTS total_quantity DOUBLE PRECISION NOT NULL DEFAULT 0;`
+    },
+    {
+      name: "Remove obsolete station_id/tank_id from fuel_supplies",
+      query: `ALTER TABLE fuel_supplies DROP COLUMN IF EXISTS station_id, DROP COLUMN IF EXISTS tank_id;`
+    },
+    {
+      name: "Create fuel_supply_distributions table if not exists",
+      query: `
+        CREATE TABLE IF NOT EXISTS fuel_supply_distributions (
+          id SERIAL PRIMARY KEY,
+          supply_id INTEGER NOT NULL REFERENCES fuel_supplies(id) ON DELETE CASCADE,
+          station_id INTEGER NOT NULL REFERENCES stations(id),
+          tank_id INTEGER NOT NULL REFERENCES tanks(id),
+          quantity DOUBLE PRECISION NOT NULL,
+          import_number INTEGER NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+      `
+    },
+    {
+      name: "Add unit to oil_consumption_rates",
+      query: `ALTER TABLE oil_consumption_rates ADD COLUMN IF NOT EXISTS unit TEXT NOT NULL DEFAULT 'عبوة';`
+    },
   ]
 
   for (const migration of migrations) {

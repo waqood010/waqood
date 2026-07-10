@@ -3,7 +3,7 @@ import { StatCard } from "@/components/dashboard/stat-card"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Flame, Droplets, Building2, AlertTriangle, Clock } from "lucide-react"
 import { db } from "@/lib/db"
-import { tanks, oils, stations, alerts, fuelSupplies, fuelTypes } from "@/lib/db/schema"
+import { tanks, oils, stations, alerts, fuelSupplies, fuelSupplyDistributions, fuelTypes } from "@/lib/db/schema"
 import { sql, eq, desc } from "drizzle-orm"
 import { formatDistanceToNow } from "date-fns"
 import { ar } from "date-fns/locale"
@@ -30,11 +30,12 @@ export default async function DashboardPage() {
     isAdmin ? db.select({
       id: fuelSupplies.id,
       date: fuelSupplies.date,
-      quantity: fuelSupplies.quantity,
+      quantity: fuelSupplyDistributions.quantity,
       stationName: stations.name,
       fuelTypeName: fuelTypes.name,
-    }).from(fuelSupplies)
-      .leftJoin(stations, eq(fuelSupplies.stationId, stations.id))
+    }).from(fuelSupplyDistributions)
+      .leftJoin(fuelSupplies, eq(fuelSupplyDistributions.supplyId, fuelSupplies.id))
+      .leftJoin(stations, eq(fuelSupplyDistributions.stationId, stations.id))
       .leftJoin(fuelTypes, eq(fuelSupplies.fuelTypeId, fuelTypes.id))
       .orderBy(desc(fuelSupplies.createdAt))
       .limit(5) : Promise.resolve([])
@@ -153,11 +154,11 @@ export default async function DashboardPage() {
                       {latestOperations.map((op) => (
                         <tr key={op.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                           <td className="p-4 align-middle">
-                            {new Date(op.date).toLocaleDateString("ar-EG")}
+                              {op.date ? new Date(op.date).toLocaleDateString("ar-EG") : ""}
                           </td>
                           <td className="p-4 align-middle font-medium">{op.stationName}</td>
                           <td className="p-4 align-middle">{op.fuelTypeName}</td>
-                          <td className="p-4 align-middle">{op.quantity.toLocaleString()} لتر</td>
+                          <td className="p-4 align-middle">{(op.quantity ?? 0).toLocaleString()} لتر</td>
                         </tr>
                       ))}
                     </tbody>

@@ -9,8 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createConsumer, updateConsumer } from "@/app/dashboard/consumers/actions"
 
-const CONSUMER_TYPES = ["ورشة صيانة", "مركز خدمة", "وحدة فنية", "أخرى"]
-
 export function ConsumerForm({
   open,
   onOpenChange,
@@ -21,7 +19,6 @@ export function ConsumerForm({
   initialData?: any
 }) {
   const [loading, setLoading] = useState(false)
-  const [type, setType] = useState<string>(initialData?.type || CONSUMER_TYPES[0])
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -33,10 +30,10 @@ export function ConsumerForm({
 
     try {
       if (initialData) {
-        await updateConsumer(initialData.id, { name, type, notes })
+        await updateConsumer(initialData.id, { name, notes })
         toast.success("تم تعديل الجهة بنجاح")
       } else {
-        await createConsumer({ name, type, notes })
+        await createConsumer({ name, notes })
         toast.success("تم إضافة الجهة بنجاح")
       }
       onOpenChange(false)
@@ -61,21 +58,6 @@ export function ConsumerForm({
           <div className="space-y-2">
             <Label htmlFor="name">اسم الجهة</Label>
             <Input id="name" name="name" required defaultValue={initialData?.name} placeholder="مثال: ورشة الإصلاح المركزية" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="type">نوع الجهة</Label>
-            <select
-              id="type"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              required
-            >
-              {CONSUMER_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
           </div>
 
           <div className="space-y-2">

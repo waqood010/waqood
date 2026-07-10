@@ -14,6 +14,7 @@ export async function getOilRates() {
       consumerId: oilConsumptionRates.consumerId,
       oilId: oilConsumptionRates.oilId,
       rate: oilConsumptionRates.rate,
+      unit: oilConsumptionRates.unit,
       period: oilConsumptionRates.period,
       consumer: { id: consumers.id, name: consumers.name },
       oil: { id: oils.id, name: oils.name, unit: oils.unit },
@@ -34,6 +35,7 @@ export async function createOilRate(data: {
   consumerId: number
   oilId: number
   rate: number
+  unit: string
   period: string
 }) {
   await requireUserId()
@@ -53,6 +55,7 @@ export async function createOilRate(data: {
     consumerId: data.consumerId,
     oilId: data.oilId,
     rate: data.rate,
+    unit: data.unit,
     period: data.period,
   }).returning()
 
@@ -60,11 +63,12 @@ export async function createOilRate(data: {
   return newRate
 }
 
-export async function updateOilRate(id: number, data: { rate: number; period: string }) {
+export async function updateOilRate(id: number, data: { rate: number; unit: string; period: string }) {
   await requireUserId()
 
   const [updatedRate] = await db.update(oilConsumptionRates).set({
     rate: data.rate,
+    unit: data.unit,
     period: data.period,
   }).where(eq(oilConsumptionRates.id, id)).returning()
 

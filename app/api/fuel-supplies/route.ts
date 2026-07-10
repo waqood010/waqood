@@ -5,6 +5,7 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url)
     const month = url.searchParams.get('month') // format YYYY-MM
+    const stationId = Number(url.searchParams.get('stationId')) || undefined
     let date: Date | undefined = undefined
     if (month) {
       const parts = month.split('-')
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
       }
     }
 
-    const rows = await getFuelSupplies(date)
+    const rows = await getFuelSupplies(date, stationId)
     return NextResponse.json(rows)
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message || 'Server error' }), { status: 500 })

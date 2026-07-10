@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { fuelSupplies, fuelConsumption, tankMeasurements, tanks, stations, fuelTypes } from "@/lib/db/schema"
+import { fuelSupplies, fuelSupplyDistributions, fuelConsumption, tankMeasurements, tanks, stations, fuelTypes } from "@/lib/db/schema"
 import { eq, and, gte, lt, desc } from "drizzle-orm"
 import { requireUserId } from "@/lib/session"
 
@@ -31,10 +31,14 @@ export async function getDailyBalances(targetDateStr?: string) {
     .innerJoin(stations, eq(tanks.stationId, stations.id))
     .innerJoin(fuelTypes, eq(tanks.fuelTypeId, fuelTypes.id))
 
-  // 2. Fetch today's supplies
+  // 2. Fetch today's supplies (distributions joined to supplies so we get tank-level quantities)
   const supplies = await db
-    .select()
-    .from(fuelSupplies)
+    .select({
+      tankId: fuelSupplyDistributions.tankId,
+      quantity: fuelSupplyDistributions.quantity,
+    })
+    .from(fuelSupplyDistributions)
+    .leftJoin(fuelSupplies, eq(fuelSupplyDistributions.supplyId, fuelSupplies.id))
     .where(and(gte(fuelSupplies.date, startOfDay), lt(fuelSupplies.date, endOfDay)))
 
   // 3. Fetch today's consumptions

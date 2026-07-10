@@ -68,12 +68,12 @@ export default async function AuditLogPage() {
                 {logs.map((log) => {
                   const actionMeta = ACTION_LABELS[log.action] ?? { label: log.action, className: "bg-gray-100 text-gray-800" }
                   const tableLabel = log.tableName ? (TABLE_LABELS[log.tableName] ?? log.tableName) : "-"
-                  const afterSummary = log.afterData
+                  const afterSummary = log.afterData && typeof log.afterData === "object"
                     ? Object.entries(log.afterData as Record<string, any>)
                         .filter(([k]) => !["id", "createdAt", "userId"].includes(k))
                         .slice(0, 3)
                         .map(([k, v]) => `${k}: ${v}`)
-                        .join(" • ")
+                        .join(" • ") || "-"
                     : "-"
 
                   return (

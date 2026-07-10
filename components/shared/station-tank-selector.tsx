@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Label } from "@/components/ui/label"
 
 interface FuelType { id: number; name: string; tonToLiter: number }
-interface Tank { id: number; name: string; fuelTypeId: number; currentBalance: number; capacityLiter: number; fuelType: FuelType }
+interface Tank { id: number; name: string; fuelTypeId: number; currentBalance: number; capacityLiter: number; fuelType: FuelType; stationId: number; minAlertLevel: number }
 interface Station { id: number; name: string }
 
 interface StationTankSelectorProps {

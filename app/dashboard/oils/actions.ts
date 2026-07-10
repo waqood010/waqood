@@ -17,6 +17,7 @@ export async function createOil(data: {
   packsPerCarton?: number
   barrelQuantity?: number
   minAlertLevel: number
+  currentBalance?: number
   notes?: string
 }) {
   await requireUserId()
@@ -28,7 +29,7 @@ export async function createOil(data: {
       unit: data.unit,
       packsPerCarton: data.packsPerCarton || 0,
       barrelQuantity: data.barrelQuantity || 0,
-      currentBalance: 0,
+      currentBalance: data.currentBalance || 0,
       minAlertLevel: data.minAlertLevel || 0,
       notes: data.notes || null,
     })
@@ -44,6 +45,7 @@ export async function updateOil(id: number, data: {
   packsPerCarton?: number
   barrelQuantity?: number
   minAlertLevel: number
+  currentBalance?: number
   notes?: string
 }) {
   await requireUserId()
@@ -55,6 +57,7 @@ export async function updateOil(id: number, data: {
       unit: data.unit,
       packsPerCarton: data.packsPerCarton || 0,
       barrelQuantity: data.barrelQuantity || 0,
+      currentBalance: data.currentBalance || 0,
       minAlertLevel: data.minAlertLevel || 0,
       notes: data.notes || null,
     })

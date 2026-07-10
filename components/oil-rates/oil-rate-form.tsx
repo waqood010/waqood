@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createOilRate, updateOilRate } from "@/app/dashboard/oil-rates/actions"
 
+const RATE_UNITS = ["عبوة", "لتر", "كيلو", "كرتونة", "برميل"]
+
 export function OilRateForm({
   open,
   onOpenChange,
@@ -26,6 +28,7 @@ export function OilRateForm({
   const [consumerId, setConsumerId] = useState<number>(initialData?.consumerId || consumers[0]?.id || 0)
   const [oilId, setOilId] = useState<number>(initialData?.oilId || oils[0]?.id || 0)
   const [period, setPeriod] = useState<string>(initialData?.period || "monthly")
+  const [rateUnit, setRateUnit] = useState<string>(initialData?.unit || "عبوة")
 
   const selectedOil = oils.find(o => o.id === oilId)
 
@@ -38,11 +41,11 @@ export function OilRateForm({
 
     try {
       if (initialData) {
-        // Can't update consumerId/oilId in update, only rate/period
-        await updateOilRate(initialData.id, { rate, period })
+        // Can't update consumerId/oilId in update, only rate/period/unit
+        await updateOilRate(initialData.id, { rate, period, unit: rateUnit })
         toast.success("تم تعديل المعدل بنجاح")
       } else {
-        await createOilRate({ consumerId, oilId, rate, period })
+        await createOilRate({ consumerId, oilId, rate, period, unit: rateUnit })
         toast.success("تم إضافة المعدل بنجاح")
       }
       onOpenChange(false)
@@ -96,7 +99,7 @@ export function OilRateForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="rate">المعدل المسموح ({selectedOil?.unit || "كمية"})</Label>
+              <Label htmlFor="rate">المعدل المسموح ({rateUnit})</Label>
               <Input
                 id="rate"
                 name="rate"
@@ -111,17 +114,32 @@ export function OilRateForm({
             </div>
 
             <div className="space-y-2">
-              <Label>الفترة</Label>
+              <Label htmlFor="unit">وحدة القياس</Label>
               <select
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
+                id="unit"
+                value={rateUnit}
+                onChange={(e) => setRateUnit(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 required
               >
-                <option value="monthly">شهري</option>
-                <option value="weekly">أسبوعي</option>
+                {RATE_UNITS.map((unit) => (
+                  <option key={unit} value={unit}>{unit}</option>
+                ))}
               </select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>الفترة</Label>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              required
+            >
+              <option value="monthly">شهري</option>
+              <option value="weekly">أسبوعي</option>
+            </select>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
@@ -8,25 +8,76 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { StationTankSelector, type Station, type Tank } from "@/components/shared/station-tank-selector"
-import { createFuelSupply } from "@/app/dashboard/fuel-supplies/actions"
+import { createFuelSupply, updateFuelSupply } from "@/app/dashboard/fuel-supplies/actions"
 
 export function FuelSupplyForm({
   open,
   onOpenChange,
   stations,
   tanks,
+  initialData,
+  onSaved,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   stations: Station[]
   tanks: Tank[]
+  initialData?: any
+  onSaved?: () => void
 }) {
   const [loading, setLoading] = useState(false)
-  const [totalQuantity, setTotalQuantity] = useState<number>(0)
-  const [unitPrice, setUnitPrice] = useState<number>(0)
-  const [distributions, setDistributions] = useState<Array<any>>([
-    { stationId: null, tankId: null, quantity: 0, importNumber: 1 },
-  ])
+  const [totalQuantity, setTotalQuantity] = useState<number>(initialData?.totalQuantity ?? 0)
+  const [unitPrice, setUnitPrice] = useState<number>(initialData?.unitPrice ?? 0)
+  const [documentNumber, setDocumentNumber] = useState<number | "">(initialData?.documentNumber ?? "")
+  const [supplierCompany, setSupplierCompany] = useState(initialData?.supplierCompany ?? "")
+  const [invoiceNumber, setInvoiceNumber] = useState(initialData?.invoiceNumber ?? "")
+  const [date, setDate] = useState<string>(
+    initialData?.date
+      ? new Date(initialData.date).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0]
+  )
+  const [distributions, setDistributions] = useState<Array<any>>(
+    initialData?.distributions?.length
+      ? initialData.distributions.map((dist: any) => ({
+          stationId: dist.stationId,
+          tankId: dist.tankId,
+          quantity: dist.quantity,
+          importNumber: dist.importNumber,
+          fuelTypeId: dist.fuelType?.id ?? tanks.find((t) => t.id === dist.tankId)?.fuelTypeId,
+        }))
+      : [{ stationId: null, tankId: null, quantity: 0, importNumber: 1 }]
+  )
+
+  useEffect(() => {
+    if (!initialData) {
+      setTotalQuantity(0)
+      setUnitPrice(0)
+      setDocumentNumber("")
+      setSupplierCompany("")
+      setInvoiceNumber("")
+      setDate(new Date().toISOString().split("T")[0])
+      setDistributions([{ stationId: null, tankId: null, quantity: 0, importNumber: 1 }])
+      return
+    }
+
+    setTotalQuantity(initialData.totalQuantity ?? 0)
+    setUnitPrice(initialData.unitPrice ?? 0)
+    setDocumentNumber(initialData.documentNumber ?? "")
+    setSupplierCompany(initialData.supplierCompany ?? "")
+    setInvoiceNumber(initialData.invoiceNumber ?? "")
+    setDate(new Date(initialData.date).toISOString().split("T")[0])
+    setDistributions(
+      initialData.distributions?.length
+        ? initialData.distributions.map((dist: any) => ({
+            stationId: dist.stationId,
+            tankId: dist.tankId,
+            quantity: dist.quantity,
+            importNumber: dist.importNumber,
+            fuelTypeId: dist.fuelType?.id ?? tanks.find((t) => t.id === dist.tankId)?.fuelTypeId,
+          }))
+        : [{ stationId: null, tankId: null, quantity: 0, importNumber: 1 }]
+    )
+  }, [initialData, tanks])
 
   function updateDistribution(index: number, patch: Partial<any>) {
     setDistributions((prev) => {
@@ -61,34 +112,69 @@ export function FuelSupplyForm({
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    const formData = new FormData(e.currentTarget)
-    const invoiceNumber = formData.get("invoiceNumber") as string
-    const supplierCompany = formData.get("supplierCompany") as string
-    const dateStr = formData.get("date") as string
+    const dateStr = date
 
     // Basic validations
     if (!totalQuantity || totalQuantity <= 0) return toast.error("ادخل الكمية الإجمالية")
     if (sumDistributed !== totalQuantity) return toast.error("مجموع الكميات الموزعة يجب أن يساوي الكمية الإجمالية")
     if (distributions.some(d => !d.stationId || !d.tankId || !d.quantity)) return toast.error("تأكد من اكتمال بيانات جميع الصفوف")
 
+    const overflow = distributions.find((d) => {
+      const tank = tanks.find((t) => t.id === d.tankId)
+      if (!tank || !d.quantity) return false
+      return d.quantity > tank.capacityLiter - tank.currentBalance
+    })
+
+    if (overflow) {
+      const tank = tanks.find((t) => t.id === overflow.tankId)
+      const freeCapacity = tank ? tank.capacityLiter - tank.currentBalance : 0
+      return toast.error(
+        `الكمية المطلوبة للخزان "${tank?.name || ""}" (${overflow.quantity.toLocaleString()} لتر) تتجاوز السعة المتاحة (${freeCapacity.toLocaleString()} لتر)`
+      )
+    }
+
     setLoading(true)
     try {
-      await createFuelSupply({
-        fuelTypeId: Number(distributions[0]?.fuelTypeId) || undefined,
-        totalQuantity,
-        unitPrice,
-        invoiceNumber,
-        supplierCompany,
-        date: new Date(dateStr),
-        distributions: distributions.map((d) => ({
-          stationId: Number(d.stationId),
-          tankId: Number(d.tankId),
-          quantity: Number(d.quantity),
-          importNumber: Number(d.importNumber) || 1,
-        })),
-      })
-      toast.success("تم تسجيل الوارد بنجاح")
+      const firstFuelTypeId = Number(distributions[0]?.fuelTypeId) || (tanks.find(t => t.id === distributions[0]?.tankId)?.fuelTypeId ?? 0)
+      if (!firstFuelTypeId) throw new Error("لا يمكن تحديد نوع الوقود للصف الأول")
+
+      if (initialData) {
+        await updateFuelSupply(initialData.id, {
+          documentNumber: Number(documentNumber),
+          fuelTypeId: firstFuelTypeId,
+          totalQuantity,
+          unitPrice,
+          invoiceNumber: invoiceNumber || undefined,
+          supplierCompany: supplierCompany || undefined,
+          date: new Date(dateStr),
+          distributions: distributions.map((d) => ({
+            stationId: Number(d.stationId),
+            tankId: Number(d.tankId),
+            quantity: Number(d.quantity),
+            importNumber: Number(d.importNumber) || 1,
+          })),
+        })
+        toast.success("تم تحديث الوارد بنجاح")
+      } else {
+        await createFuelSupply({
+          fuelTypeId: firstFuelTypeId,
+          totalQuantity,
+          unitPrice,
+          invoiceNumber: invoiceNumber || undefined,
+          supplierCompany: supplierCompany || undefined,
+          date: new Date(dateStr),
+          distributions: distributions.map((d) => ({
+            stationId: Number(d.stationId),
+            tankId: Number(d.tankId),
+            quantity: Number(d.quantity),
+            importNumber: Number(d.importNumber) || 1,
+          })),
+        })
+        toast.success("تم تسجيل الوارد بنجاح")
+      }
+
       onOpenChange(false)
+      onSaved?.()
     } catch (err: any) {
       toast.error(err.message || "حدث خطأ أثناء الحفظ")
     } finally {
@@ -110,7 +196,7 @@ export function FuelSupplyForm({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>تاريخ التوريد</Label>
-              <Input name="date" type="date" required defaultValue={new Date().toISOString().split("T")[0]} />
+              <Input name="date" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
 
             <div className="space-y-2">
@@ -118,6 +204,23 @@ export function FuelSupplyForm({
               <Input type="number" step="0.01" value={unitPrice || ""} onChange={(e) => setUnitPrice(Number(e.target.value))} dir="ltr" className="text-right" />
             </div>
           </div>
+
+          {initialData && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>رقم المستند</Label>
+                <Input
+                  type="number"
+                  required
+                  value={documentNumber}
+                  onChange={(e) => setDocumentNumber(Number(e.target.value))}
+                  dir="ltr"
+                  className="text-right"
+                />
+              </div>
+              <div className="space-y-2" />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -181,12 +284,12 @@ export function FuelSupplyForm({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>الشركة المورِّدة (اختياري)</Label>
-              <Input name="supplierCompany" placeholder="مثال: شركة مصر للبترول" />
+              <Input name="supplierCompany" value={supplierCompany} onChange={(e) => setSupplierCompany(e.target.value)} placeholder="مثال: شركة مصر للبترول" />
             </div>
 
             <div className="space-y-2">
               <Label>رقم الفاتورة (اختياري)</Label>
-              <Input name="invoiceNumber" placeholder="رقم الفاتورة أو إذن التسليم" dir="ltr" className="text-right" />
+              <Input name="invoiceNumber" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="رقم الفاتورة أو إذن التسليم" dir="ltr" className="text-right" />
             </div>
           </div>
 

@@ -29,6 +29,7 @@ export function OilForm({
 
     const formData = new FormData(e.currentTarget)
     const name = formData.get("name") as string
+    const currentBalance = Number(formData.get("currentBalance")) || 0
     const minAlertLevel = Number(formData.get("minAlertLevel")) || 0
     const packsPerCarton = Number(formData.get("packsPerCarton")) || 0
     const barrelQuantity = Number(formData.get("barrelQuantity")) || 0
@@ -38,6 +39,7 @@ export function OilForm({
       if (initialData) {
         await updateOil(initialData.id, {
           name,
+          currentBalance,
           unit,
           packsPerCarton,
           barrelQuantity,
@@ -48,6 +50,7 @@ export function OilForm({
       } else {
         await createOil({
           name,
+          currentBalance,
           unit,
           packsPerCarton,
           barrelQuantity,
@@ -127,6 +130,20 @@ export function OilForm({
               />
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="currentBalance">الرصيد الحالي ({unit})</Label>
+            <Input
+              id="currentBalance"
+              name="currentBalance"
+              type="number"
+              step="0.01"
+              defaultValue={initialData?.currentBalance ?? 0}
+              dir="ltr"
+              className="text-right"
+            />
+            <p className="text-xs text-muted-foreground">تحديد الرصيد الحالي للصنف في المخزن</p>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="minAlertLevel">حد التنبيه الأدنى ({unit})</Label>

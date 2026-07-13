@@ -48,14 +48,15 @@ export function OilsTable({ initialData, isAdmin }: { initialData: any[], isAdmi
       </div>
 
       <div className="rounded-md border border-border bg-card overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="w-full overflow-x-auto">
           <table className="w-full text-sm text-right">
             <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
               <tr>
                 <th className="px-4 py-3 font-medium">اسم الصنف</th>
-                <th className="px-4 py-3 font-medium">وحدة القياس</th>
-                <th className="px-4 py-3 font-medium text-center">تفاصيل الوحدة</th>
+                <th className="px-4 py-3 font-medium text-center">سعر الوحدة</th>
+                <th className="px-4 py-3 font-medium text-center">وحدة القياس الجامعة</th>
                 <th className="px-4 py-3 font-medium text-center">الرصيد الحالي</th>
+                <th className="px-4 py-3 font-medium text-center">عدد الوحدات</th>
                 <th className="px-4 py-3 font-medium text-center">حالة الرصيد</th>
                 <th className="px-4 py-3 font-medium">ملاحظات</th>
                 {isAdmin && <th className="px-4 py-3 font-medium text-left">الإجراءات</th>}
@@ -64,7 +65,7 @@ export function OilsTable({ initialData, isAdmin }: { initialData: any[], isAdmi
             <tbody className="divide-y divide-border">
               {filteredData.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                     لا يوجد أصناف مطابقة للبحث
                   </td>
                 </tr>
@@ -77,19 +78,33 @@ export function OilsTable({ initialData, isAdmin }: { initialData: any[], isAdmi
                         <Droplets className="size-4 text-primary" />
                         {item.name}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary text-secondary-foreground">
-                          {item.unit}
-                        </span>
+                      <td className="px-4 py-3 text-center" dir="ltr">
+                        {item.unitPrice ? `${item.unitPrice.toFixed(2)}` : "-"}
                       </td>
                       <td className="px-4 py-3 text-center text-xs text-muted-foreground">
-                        {item.unit === "كرتونة" ? `${item.packsPerCarton} عبوة/كرتونة` : 
-                         item.unit === "برميل" ? `${item.barrelQuantity} لتر/برميل` : "-"}
+                        {item.aggregateUnit ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
+                            {item.aggregateUnit}
+                            <span className="text-muted-foreground font-normal">({item.aggregateUnitQuantity} {item.unit})</span>
+                          </span>
+                        ) : item.unit === "كرتونة" && item.packsPerCarton ? `${item.packsPerCarton} عبوة/كرتونة` :
+                         item.unit === "برميل" && item.barrelQuantity ? `${item.barrelQuantity} لتر/برميل` : "-"}
                       </td>
                       <td className="px-4 py-3 text-center font-bold" dir="ltr">
                         <span className={cn(isLow && "text-destructive")}>
                           {item.currentBalance.toLocaleString()}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-center font-bold text-primary" dir="rtl">
+                        {item.aggregateUnit && item.aggregateUnitQuantity > 0 ? (
+                          <span>
+                            {Math.floor(item.currentBalance / item.aggregateUnitQuantity)} {item.aggregateUnit} و {(item.currentBalance % item.aggregateUnitQuantity).toFixed(2)} {item.unit}
+                          </span>
+                        ) : item.barrelQuantity && item.barrelQuantity > 0 ? (
+                          <span>
+                            {Math.floor(item.currentBalance / item.barrelQuantity)} برميل و {(item.currentBalance % item.barrelQuantity).toFixed(2)} {item.unit}
+                          </span>
+                        ) : "-"}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {isLow ? (

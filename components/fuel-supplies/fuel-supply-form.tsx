@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { StationTankSelector, type Station, type Tank } from "@/components/shared/station-tank-selector"
-import { createFuelSupply, updateFuelSupply } from "@/app/dashboard/fuel-supplies/actions"
+import { createFuelSupply, updateFuelSupply, getNextDocumentNumber } from "@/app/dashboard/fuel-supplies/actions"
 
 export function FuelSupplyForm({
   open,
@@ -57,6 +57,11 @@ export function FuelSupplyForm({
       setInvoiceNumber("")
       setDate(new Date().toISOString().split("T")[0])
       setDistributions([{ stationId: null, tankId: null, quantity: 0, importNumber: 1 }])
+
+      // Fetch next document number
+      getNextDocumentNumber()
+        .then((num) => setDocumentNumber(num))
+        .catch((err) => console.error("Failed to fetch next document number:", err))
       return
     }
 
@@ -157,6 +162,7 @@ export function FuelSupplyForm({
         toast.success("تم تحديث الوارد بنجاح")
       } else {
         await createFuelSupply({
+          documentNumber: documentNumber ? Number(documentNumber) : undefined,
           fuelTypeId: firstFuelTypeId,
           totalQuantity,
           unitPrice,
@@ -205,22 +211,20 @@ export function FuelSupplyForm({
             </div>
           </div>
 
-          {initialData && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>رقم المستند</Label>
-                <Input
-                  type="number"
-                  required
-                  value={documentNumber}
-                  onChange={(e) => setDocumentNumber(Number(e.target.value))}
-                  dir="ltr"
-                  className="text-right"
-                />
-              </div>
-              <div className="space-y-2" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>رقم المستند</Label>
+              <Input
+                type="number"
+                required
+                value={documentNumber}
+                onChange={(e) => setDocumentNumber(e.target.value === "" ? "" : Number(e.target.value))}
+                dir="ltr"
+                className="text-right"
+              />
             </div>
-          )}
+            <div className="space-y-2" />
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -252,7 +256,20 @@ export function FuelSupplyForm({
                         allTanks={tanks}
                         selectedStationId={d.stationId}
                         selectedTankId={d.tankId}
-                        onStationChange={(id) => updateDistribution(idx, { stationId: id })}
+                        onStationChange={async (id) => {
+                          updateDistribution(idx, { stationId: id, tankId: null })
+                          if (id) {
+                            try {
+                              const res = await fetch(`/api/fuel-supplies/next-import-number?stationId=${id}`)
+                              const json = await res.json()
+                              if (json.next) {
+                                updateDistribution(idx, { importNumber: json.next })
+                              }
+                            } catch (err) {
+                              console.error("Failed to get next import number:", err)
+                            }
+                          }
+                        }}
                         onTankChange={(id) => updateDistribution(idx, { tankId: id })}
                         onTankDataChange={(tank) => updateDistribution(idx, { fuelTypeId: tank?.fuelTypeId })}
                       />

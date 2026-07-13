@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { createOil, updateOil } from "@/app/dashboard/oils/actions"
 
 const UNITS = ["عبوة", "لتر", "كيلو", "كرتونة", "برميل"]
+const AGGREGATE_UNITS = ["برميل", "جركن", "بستلة", "كرتونة"]
 
 export function OilForm({
   open,
@@ -22,6 +23,10 @@ export function OilForm({
 }) {
   const [loading, setLoading] = useState(false)
   const [unit, setUnit] = useState<string>(initialData?.unit || UNITS[0])
+  const [aggregateUnit, setAggregateUnit] = useState<string>(initialData?.aggregateUnit || "")
+  const [aggregateUnitQuantity, setAggregateUnitQuantity] = useState<number>(
+    initialData?.aggregateUnitQuantity || 1
+  )
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -31,6 +36,7 @@ export function OilForm({
     const name = formData.get("name") as string
     const currentBalance = Number(formData.get("currentBalance")) || 0
     const minAlertLevel = Number(formData.get("minAlertLevel")) || 0
+    const unitPrice = Number(formData.get("unitPrice")) || 0
     const packsPerCarton = Number(formData.get("packsPerCarton")) || 0
     const barrelQuantity = Number(formData.get("barrelQuantity")) || 0
     const notes = formData.get("notes") as string
@@ -41,8 +47,11 @@ export function OilForm({
           name,
           currentBalance,
           unit,
+          unitPrice,
           packsPerCarton,
           barrelQuantity,
+          aggregateUnit: aggregateUnit || undefined,
+          aggregateUnitQuantity: aggregateUnit ? aggregateUnitQuantity : 0,
           minAlertLevel,
           notes,
         })
@@ -52,8 +61,11 @@ export function OilForm({
           name,
           currentBalance,
           unit,
+          unitPrice,
           packsPerCarton,
           barrelQuantity,
+          aggregateUnit: aggregateUnit || undefined,
+          aggregateUnitQuantity: aggregateUnit ? aggregateUnitQuantity : 0,
           minAlertLevel,
           notes,
         })
@@ -83,6 +95,7 @@ export function OilForm({
             <Input id="name" name="name" required defaultValue={initialData?.name} placeholder="مثال: زيت محرك ديزل 50" />
           </div>
 
+          {/* Basic Unit */}
           <div className="space-y-2">
             <Label htmlFor="unit">وحدة القياس الأساسية</Label>
             <select
@@ -130,6 +143,65 @@ export function OilForm({
               />
             </div>
           )}
+
+          {/* Aggregate Unit */}
+          <div className="rounded-md border border-border bg-secondary/20 p-4 space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="aggregateUnit">وحدة القياس الجامعة (اختياري)</Label>
+              <p className="text-xs text-muted-foreground">
+                الوحدة الأكبر التي تجمع عدداً من وحدات القياس الأساسية — مثل: كرتونة تحتوي على 12 {unit}
+              </p>
+            </div>
+            <select
+              id="aggregateUnit"
+              value={aggregateUnit}
+              onChange={(e) => setAggregateUnit(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <option value="">— بدون وحدة جامعة —</option>
+              {AGGREGATE_UNITS.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+
+            {aggregateUnit && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                <Label htmlFor="aggregateUnitQuantity">
+                  عدد {unit} في كل {aggregateUnit}
+                </Label>
+                <Input
+                  id="aggregateUnitQuantity"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  value={aggregateUnitQuantity || ""}
+                  onChange={(e) => setAggregateUnitQuantity(Number(e.target.value))}
+                  dir="ltr"
+                  className="text-right"
+                />
+                <p className="text-xs text-muted-foreground">
+                  مثال: {aggregateUnit} = {aggregateUnitQuantity} {unit}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="unitPrice">سعر الوحدة</Label>
+            <Input
+              id="unitPrice"
+              name="unitPrice"
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue={initialData?.unitPrice ?? 0}
+              dir="ltr"
+              className="text-right"
+              placeholder="0.00"
+            />
+            <p className="text-xs text-muted-foreground">سعر الوحدة الواحدة ({unit})</p>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="currentBalance">الرصيد الحالي ({unit})</Label>

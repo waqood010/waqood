@@ -2,14 +2,30 @@ import { getSession } from "@/lib/session"
 import { getOilTransactions, getConsumersAndOils } from "./actions"
 import { HandCoins } from "lucide-react"
 import { OilTransactionsTable } from "@/components/oil-transactions/oil-transactions-table"
+
 export default async function OilTransactionsPage({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }) {
   const session = await getSession()
   const isAdmin = session?.user?.role === "admin"
 
+  // Default dates: From the 1st of the current month to today
+  const now = new Date()
+  const from = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0)
+  const to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+
+  const formatDateString = (date: Date) => {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, "0")
+    const d = String(date.getDate()).padStart(2, "0")
+    return `${y}-${m}-${d}`
+  }
+
+  const defaultFrom = formatDateString(from)
+  const defaultTo = formatDateString(to)
+
   const consumerId = searchParams?.consumerId ? Number(searchParams.consumerId as string) : undefined
   const oilId = searchParams?.oilId ? Number(searchParams.oilId as string) : undefined
-  const from = searchParams?.from ? new Date(searchParams.from as string) : undefined
-  const to = searchParams?.to ? new Date(searchParams.to as string) : undefined
+  const fromParam = searchParams?.from ? new Date(searchParams.from as string) : from
+  const toParam = searchParams?.to ? new Date(searchParams.to as string) : to
   const search = searchParams?.q ? String(searchParams.q) : undefined
   const page = searchParams?.page ? Number(searchParams.page as string) : 1
   const pageSize = searchParams?.pageSize ? Number(searchParams.pageSize as string) : 25
@@ -17,8 +33,8 @@ export default async function OilTransactionsPage({ searchParams }: { searchPara
   const result = await getOilTransactions({
     consumerId,
     oilId,
-    from,
-    to,
+    from: fromParam,
+    to: toParam,
     search,
     page,
     pageSize,
@@ -49,6 +65,8 @@ export default async function OilTransactionsPage({ searchParams }: { searchPara
           page={result.page}
           pageSize={result.pageSize}
           hasMore={result.hasMore}
+          defaultFrom={defaultFrom}
+          defaultTo={defaultTo}
         />
       </div>
     </div>

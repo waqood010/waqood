@@ -170,7 +170,8 @@ export async function getStationsWithTanks() {
 
 // ─── Auto document number (سنوي) ────────────────────────────────────────────
 
-async function getNextDocumentNumber(): Promise<number> {
+export async function getNextDocumentNumber(): Promise<number> {
+  await requireUserId()
   const currentYear = new Date().getFullYear()
   const startOfYear = new Date(currentYear, 0, 1)
   const result = await db
@@ -192,13 +193,13 @@ export async function getNextImportNumber(stationId: number): Promise<number> {
 
 // ─── Read ────────────────────────────────────────────────────────────────────
 
-export async function getFuelSupplies(monthDate?: Date, stationId?: number) {
+export async function getFuelSupplies(from?: Date, to?: Date, stationId?: number) {
   await requireUserId()
 
-  // Use current month if not specified
-  const date = monthDate || new Date()
-  const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1)
-  const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59)
+  // Use current month-from-first to today if not specified
+  const now = new Date()
+  const startOfMonth = from ?? new Date(now.getFullYear(), now.getMonth(), 1)
+  const endOfDay = to ?? new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
 
   try {
     if (stationId) {
@@ -223,7 +224,7 @@ export async function getFuelSupplies(monthDate?: Date, stationId?: number) {
         .where(
           and(
             gte(fuelSupplies.date, startOfMonth),
-            lte(fuelSupplies.date, endOfMonth),
+            lte(fuelSupplies.date, endOfDay),
             eq(fuelSupplyDistributions.stationId, stationId)
           )
         )
@@ -250,7 +251,7 @@ export async function getFuelSupplies(monthDate?: Date, stationId?: number) {
       .where(
         and(
           gte(fuelSupplies.date, startOfMonth),
-          lte(fuelSupplies.date, endOfMonth)
+          lte(fuelSupplies.date, endOfDay)
         )
       )
       .orderBy(asc(fuelSupplies.documentNumber), desc(fuelSupplies.date))
@@ -278,7 +279,7 @@ export async function getFuelSupplies(monthDate?: Date, stationId?: number) {
       .where(
         and(
           gte(fuelSupplies.date, startOfMonth),
-          lte(fuelSupplies.date, endOfMonth)
+          lte(fuelSupplies.date, endOfDay)
         )
       )
       .groupBy(
@@ -466,6 +467,7 @@ export async function updateFuelSupply(id: number, data: {
 }
 
 export async function createFuelSupply(data: {
+  documentNumber?: number
   fuelTypeId: number
   totalQuantity: number
   unitPrice: number
@@ -504,7 +506,7 @@ export async function createFuelSupply(data: {
     }
   }
 
-  const documentNumber = await getNextDocumentNumber()
+  const documentNumber = data.documentNumber ?? (await getNextDocumentNumber())
   const totalPrice = data.totalQuantity * data.unitPrice
   const firstDistribution = data.distributions[0]
 

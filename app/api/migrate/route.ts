@@ -57,6 +57,26 @@ export async function GET() {
       name: "Add unit to oil_consumption_rates",
       query: `ALTER TABLE oil_consumption_rates ADD COLUMN IF NOT EXISTS unit TEXT NOT NULL DEFAULT 'عبوة';`
     },
+    {
+      name: "Add aggregate_unit to oils",
+      query: `ALTER TABLE oils ADD COLUMN IF NOT EXISTS aggregate_unit TEXT;`
+    },
+    {
+      name: "Add aggregate_unit_quantity to oils",
+      query: `ALTER TABLE oils ADD COLUMN IF NOT EXISTS aggregate_unit_quantity DOUBLE PRECISION NOT NULL DEFAULT 0;`
+    },
+    {
+      name: "Add unit_price to oils",
+      query: `ALTER TABLE oils ADD COLUMN IF NOT EXISTS unit_price DOUBLE PRECISION NOT NULL DEFAULT 0;`
+    },
+    {
+      name: "Add contract_number to oil_supplies",
+      query: `ALTER TABLE oil_supplies ADD COLUMN IF NOT EXISTS contract_number TEXT;`
+    },
+    {
+      name: "Add next_refill_date to oil_consumption_rates",
+      query: `ALTER TABLE oil_consumption_rates ADD COLUMN IF NOT EXISTS next_refill_date TIMESTAMP;`
+    },
   ]
 
   for (const migration of migrations) {

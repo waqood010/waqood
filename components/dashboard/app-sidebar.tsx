@@ -3,7 +3,7 @@
 import * as React from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { ShieldCheck, LogOut } from "lucide-react"
+import { ShieldCheck, LogOut, Loader2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -22,6 +22,12 @@ import { authClient } from "@/lib/auth-client"
 
 export function AppSidebar({ role }: { role: string }) {
   const pathname = usePathname()
+  const [loadingHref, setLoadingHref] = React.useState<string | null>(null)
+  const [isSigningOut, setIsSigningOut] = React.useState(false)
+
+  React.useEffect(() => {
+    setLoadingHref(null)
+  }, [pathname])
 
   return (
     <Sidebar side="right" variant="sidebar" collapsible="icon" dir="rtl">
@@ -58,6 +64,7 @@ export function AppSidebar({ role }: { role: string }) {
                 <SidebarMenu>
                   {visibleItems.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                    const isLoading = loadingHref === item.href
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
@@ -65,10 +72,19 @@ export function AppSidebar({ role }: { role: string }) {
                           isActive={isActive}
                           tooltip={item.title}
                           className="h-10 text-right justify-end gap-3"
+                          onClick={() => {
+                            if (pathname !== item.href) {
+                              setLoadingHref(item.href)
+                            }
+                          }}
                         >
                           <span className="font-medium flex-1 text-right">{item.title}</span>
                           <span className="w-7 flex items-center justify-center shrink-0">
-                            <item.icon className="size-4 opacity-70" />
+                            {isLoading ? (
+                              <Loader2 className="size-4 animate-spin text-primary" />
+                            ) : (
+                              <item.icon className="size-4 opacity-70" />
+                            )}
                           </span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -87,19 +103,29 @@ export function AppSidebar({ role }: { role: string }) {
             <SidebarMenuButton
               tooltip="تسجيل الخروج"
               className="text-destructive hover:bg-destructive/10 hover:text-destructive h-10 gap-3 justify-end text-right"
+              disabled={isSigningOut}
               onClick={async () => {
-                await authClient.signOut({
-                  fetchOptions: {
-                    onSuccess: () => {
-                      window.location.href = "/sign-in"
+                setIsSigningOut(true)
+                try {
+                  await authClient.signOut({
+                    fetchOptions: {
+                      onSuccess: () => {
+                        window.location.href = "/sign-in"
+                      },
                     },
-                  },
-                })
+                  })
+                } catch (e) {
+                  setIsSigningOut(false)
+                }
               }}
             >
               <span className="font-medium flex-1 text-right">تسجيل الخروج</span>
               <span className="w-7 flex items-center justify-center shrink-0">
-                <LogOut className="size-4" />
+                {isSigningOut ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <LogOut className="size-4" />
+                )}
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>

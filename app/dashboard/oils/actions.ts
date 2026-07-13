@@ -14,8 +14,11 @@ export async function getOils() {
 export async function createOil(data: {
   name: string
   unit: string
+  unitPrice?: number
   packsPerCarton?: number
   barrelQuantity?: number
+  aggregateUnit?: string
+  aggregateUnitQuantity?: number
   minAlertLevel: number
   currentBalance?: number
   notes?: string
@@ -27,8 +30,11 @@ export async function createOil(data: {
     .values({
       name: data.name,
       unit: data.unit,
+      unitPrice: data.unitPrice || 0,
       packsPerCarton: data.packsPerCarton || 0,
       barrelQuantity: data.barrelQuantity || 0,
+      aggregateUnit: data.aggregateUnit || null,
+      aggregateUnitQuantity: data.aggregateUnitQuantity || 0,
       currentBalance: data.currentBalance || 0,
       minAlertLevel: data.minAlertLevel || 0,
       notes: data.notes || null,
@@ -42,8 +48,11 @@ export async function createOil(data: {
 export async function updateOil(id: number, data: {
   name: string
   unit: string
+  unitPrice?: number
   packsPerCarton?: number
   barrelQuantity?: number
+  aggregateUnit?: string
+  aggregateUnitQuantity?: number
   minAlertLevel: number
   currentBalance?: number
   notes?: string
@@ -55,8 +64,11 @@ export async function updateOil(id: number, data: {
     .set({
       name: data.name,
       unit: data.unit,
+      unitPrice: data.unitPrice || 0,
       packsPerCarton: data.packsPerCarton || 0,
       barrelQuantity: data.barrelQuantity || 0,
+      aggregateUnit: data.aggregateUnit || null,
+      aggregateUnitQuantity: data.aggregateUnitQuantity || 0,
       currentBalance: data.currentBalance || 0,
       minAlertLevel: data.minAlertLevel || 0,
       notes: data.notes || null,

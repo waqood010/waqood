@@ -17,11 +17,13 @@ export function FuelConsumptionForm({
   onOpenChange,
   stations,
   tanks,
+  onSaved,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   stations: Station[]
   tanks: Tank[]
+  onSaved?: () => void | Promise<void>
 }) {
   const [loading, setLoading] = useState(false)
   const [stationId, setStationId] = useState<number | null>(null)
@@ -65,6 +67,9 @@ export function FuelConsumptionForm({
         actualReading: includeActualReading ? actualReading : undefined,
       })
       toast.success("تم تسجيل الاستهلاك بنجاح")
+      if (onSaved) {
+        await onSaved()
+      }
       onOpenChange(false)
     } catch (err: any) {
       toast.error(err.message || "حدث خطأ أثناء الحفظ")

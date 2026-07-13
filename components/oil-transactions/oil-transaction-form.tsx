@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createOilTransaction } from "@/app/dashboard/oil-transactions/actions"
+import { createOilTransaction, updateOilTransaction } from "@/app/dashboard/oil-transactions/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,19 +13,28 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
 export function OilTransactionForm({ 
   open, 
   onOpenChange,
   consumers,
-  oils
+  oils,
+  initialData,
 }: { 
   open: boolean
   onOpenChange: (open: boolean) => void
   consumers: any[]
   oils: any[]
+  initialData?: any
 }) {
   const [loading, setLoading] = useState(false)
+
+  const formatDateForInput = (date: any) => {
+    if (!date) return new Date().toISOString().split('T')[0]
+    const d = new Date(date)
+    return d.toISOString().split('T')[0]
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -45,8 +54,13 @@ export function OilTransactionForm({
     }
 
     try {
-      await createOilTransaction(data)
-      toast.success("تم تسجيل عملية الصرف بنجاح")
+      if (initialData) {
+        await updateOilTransaction(initialData.id, data)
+        toast.success("تم تحديث عملية الصرف بنجاح")
+      } else {
+        await createOilTransaction(data)
+        toast.success("تم تسجيل عملية الصرف بنجاح")
+      }
       onOpenChange(false)
     } catch (err: any) {
       toast.error(err.message || "حدث خطأ أثناء الحفظ")
@@ -59,7 +73,9 @@ export function OilTransactionForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>تسجيل عملية صرف زيوت جديدة</DialogTitle>
+          <DialogTitle>
+            {initialData ? "تعديل عملية الصرف" : "تسجيل عملية صرف زيوت جديدة"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="grid grid-cols-2 gap-4">
@@ -70,7 +86,7 @@ export function OilTransactionForm({
                 name="date"
                 type="date"
                 required
-                defaultValue={new Date().toISOString().split('T')[0]}
+                defaultValue={formatDateForInput(initialData?.date)}
               />
             </div>
             <div className="space-y-2">
@@ -79,6 +95,7 @@ export function OilTransactionForm({
                 id="consumerId"
                 name="consumerId"
                 required
+                defaultValue={initialData?.consumerId || ""}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-right"
               >
                 <option value="">اختر الجهة...</option>
@@ -98,6 +115,7 @@ export function OilTransactionForm({
                 id="oilId"
                 name="oilId"
                 required
+                defaultValue={initialData?.oilId || ""}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-right"
               >
                 <option value="">اختر الصنف...</option>
@@ -117,6 +135,7 @@ export function OilTransactionForm({
                 step="0.01"
                 min="0"
                 required
+                defaultValue={initialData?.quantity || ""}
                 dir="ltr"
                 className="text-right"
               />
@@ -125,11 +144,12 @@ export function OilTransactionForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="dispenserName">اسم الصارف (مأمور المستودع)</Label>
+              <Label htmlFor="dispenserName">اسم الصارف</Label>
               <Input
                 id="dispenserName"
                 name="dispenserName"
                 required
+                defaultValue={initialData?.dispenserName || ""}
               />
             </div>
             <div className="space-y-2">
@@ -139,6 +159,7 @@ export function OilTransactionForm({
                 name="serialNumber"
                 dir="ltr"
                 className="text-right"
+                defaultValue={initialData?.serialNumber || ""}
               />
             </div>
           </div>
@@ -150,6 +171,7 @@ export function OilTransactionForm({
                 id="receiverName"
                 name="receiverName"
                 required
+                defaultValue={initialData?.receiverName || ""}
               />
             </div>
             <div className="space-y-2">
@@ -157,6 +179,7 @@ export function OilTransactionForm({
               <Input
                 id="receiverRank"
                 name="receiverRank"
+                defaultValue={initialData?.receiverRank || ""}
               />
             </div>
           </div>
@@ -167,15 +190,20 @@ export function OilTransactionForm({
               id="notes"
               name="notes"
               className="resize-none"
+              defaultValue={initialData?.notes || ""}
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               إلغاء
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "جاري الحفظ..." : "حفظ الصرف"}
+              {loading && <Loader2 className="ml-2 size-4 animate-spin" />}
+              {initialData 
+                ? (loading ? "جاري التحديث..." : "تحديث الصرف") 
+                : (loading ? "جاري الحفظ..." : "حفظ الصرف")
+              }
             </Button>
           </div>
         </form>

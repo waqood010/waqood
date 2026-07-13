@@ -170,8 +170,11 @@ export const oils = pgTable("oils", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   unit: text("unit").notNull().default("عبوة"), // عبوة / لتر / كيلو / كرتونة / برميل
+  unitPrice: doublePrecision("unit_price").default(0), // سعر الوحدة
   packsPerCarton: integer("packs_per_carton").default(0),
   barrelQuantity: doublePrecision("barrel_quantity").default(0),
+  aggregateUnit: text("aggregate_unit"), // وحدة القياس الجامعة: برميل / جركن / بستلة / كرتونة
+  aggregateUnitQuantity: doublePrecision("aggregate_unit_quantity").default(0), // عدد وحدات القياس الأساسية داخل وحدة القياس الجامعة
   currentBalance: doublePrecision("current_balance").notNull().default(0),
   minAlertLevel: doublePrecision("min_alert_level").notNull().default(0),
   notes: text("notes"),
@@ -186,6 +189,7 @@ export const oilSupplies = pgTable("oil_supplies", {
   price: doublePrecision("price").notNull().default(0),
   supplier: text("supplier"),
   invoiceNumber: text("invoice_number"),
+  contractNumber: text("contract_number"),
   date: timestamp("date").notNull().defaultNow(),
   notes: text("notes"),
   userId: text("userId"),
@@ -209,6 +213,7 @@ export const oilConsumptionRates = pgTable("oil_consumption_rates", {
   rate: doublePrecision("rate").notNull().default(0),
   unit: text("unit").notNull().default("عبوة"),
   period: text("period").notNull().default("monthly"), // weekly | monthly
+  nextRefillDate: timestamp("next_refill_date"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 

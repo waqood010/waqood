@@ -139,3 +139,80 @@ export async function deleteOilTransaction(id: number) {
   revalidatePath("/dashboard/oil-transactions")
   return { success: true }
 }
+
+export async function updateOilTransaction(id: number, data: {
+  date: string
+  quantity: number
+  serialNumber: string | null
+  dispenserName: string
+  receiverName: string
+  receiverRank: string | null
+  notes: string | null
+  oilId: number
+  consumerId: number
+}) {
+  const userId = await requireUserId()
+
+  // Get existing transaction
+  const [existing] = await db.select().from(oilTransactions).where(eq(oilTransactions.id, id))
+  if (!existing) throw new Error("العملية المحددة غير موجودة")
+
+  // Get target oil
+  const [targetOil] = await db.select().from(oils).where(eq(oils.id, data.oilId))
+  if (!targetOil) throw new Error("الصنف المحدد غير موجود")
+
+  // Calculate balance difference
+  const quantityDifference = data.quantity - existing.quantity
+
+  // Check if oil change or quantity increase requires sufficient balance
+  if (quantityDifference > 0) {
+    if (targetOil.currentBalance < quantityDifference) {
+      throw new Error(`الرصيد الحالي غير كافٍ. المتبقي: ${targetOil.currentBalance} ${targetOil.unit}`)
+    }
+  }
+
+  // Update transaction
+  const [updated] = await db
+    .update(oilTransactions)
+    .set({
+      date: new Date(data.date),
+      quantity: data.quantity,
+      serialNumber: data.serialNumber ? Number(data.serialNumber) : null,
+      dispenserName: data.dispenserName,
+      receiverName: data.receiverName,
+      receiverRank: data.receiverRank,
+      notes: data.notes,
+      oilId: data.oilId,
+      consumerId: data.consumerId,
+    })
+    .where(eq(oilTransactions.id, id))
+    .returning()
+
+  // Update oil balance if quantity or oil changed
+  if (data.oilId === existing.oilId && quantityDifference !== 0) {
+    // Same oil, just adjust balance
+    await db.execute(sql`
+      UPDATE oils 
+      SET current_balance = current_balance - ${quantityDifference} 
+      WHERE id = ${data.oilId}
+    `).catch(err => console.error("Failed to update oil balance:", err))
+  } else if (data.oilId !== existing.oilId) {
+    // Oil changed, revert old and deduct new
+    await db.execute(sql`
+      UPDATE oils 
+      SET current_balance = current_balance + ${existing.quantity} 
+      WHERE id = ${existing.oilId}
+    `).catch(err => console.error("Failed to revert old oil balance:", err))
+
+    await db.execute(sql`
+      UPDATE oils 
+      SET current_balance = current_balance - ${data.quantity} 
+      WHERE id = ${data.oilId}
+    `).catch(err => console.error("Failed to deduct new oil balance:", err))
+  }
+
+  await logAction("update", "oil_transactions", id, existing, updated)
+
+  revalidatePath("/dashboard/oil-transactions")
+  return updated
+}

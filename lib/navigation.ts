@@ -45,8 +45,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { title: "أصناف الزيوت", href: "/dashboard/oils", icon: Droplets },
       { title: "توريدات الزيوت", href: "/dashboard/oil-supplies", icon: PackagePlus },
-      { title: "الجهات المستهلكة", href: "/dashboard/consumers", icon: Users },
-      { title: "معدلات الاستهلاك", href: "/dashboard/oil-rates", icon: Gauge },
+      { title: "الجهات المستهلكة ومعدلات الاستهلاك", href: "/dashboard/consumers", icon: Users },
       { title: "صرف الزيوت", href: "/dashboard/oil-transactions", icon: HandCoins },
     ],
   },

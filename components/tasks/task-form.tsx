@@ -15,6 +15,7 @@ const repeatOptions = [
   { value: "daily", label: "يومية" },
   { value: "weekly", label: "أسبوعية" },
   { value: "monthly", label: "شهرية" },
+  { value: "semiannual", label: "نصف سنوية" },
   { value: "quarterly", label: "ربع سنوية" },
   { value: "yearly", label: "سنوية" },
 ]
@@ -23,6 +24,8 @@ const reminderOffsets = [
   { value: 1, label: "قبل الموعد بيوم" },
   { value: 7, label: "قبل الموعد بأسبوع" },
   { value: 15, label: "قبل الموعد بـ 15 يوم" },
+  { value: 30, label: "قبل الموعد بشهر" },
+  { value: 5, label: "قبل الموعد بـ 5 أيام" },
 ]
 
 const reminderIntervals = [
@@ -42,6 +45,7 @@ export function TaskForm({
 }) {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState(initialData?.status || "pending")
+  const [customOffset, setCustomOffset] = useState<number | null>(null)
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -77,18 +81,8 @@ export function TaskForm({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full sm:max-w-2xl overflow-hidden">
-        <DialogHeader className="relative">
+        <DialogHeader>
           <DialogTitle>{initialData ? "تعديل المهمة" : "إضافة مهمة جديدة"}</DialogTitle>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="absolute top-0 left-0"
-            onClick={() => onOpenChange(false)}
-            aria-label="إغلاق"
-          >
-            <X className="size-4" />
-          </Button>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-4 pt-4">
@@ -138,13 +132,31 @@ export function TaskForm({
                 name="reminderOffsetDays"
                 defaultValue={(initialData?.reminderOffsetDays ?? 1).toString()}
                 className="flex h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-right"
+                onChange={(e) => {
+                  if (e.target.value === "custom") setCustomOffset(Number(customOffset ?? 0))
+                  else setCustomOffset(null)
+                }}
               >
                 {reminderOffsets.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
+                <option value="custom">مخصص...</option>
               </select>
+              {customOffset !== null && (
+                <div className="mt-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="أدخل عدد الأيام"
+                    value={customOffset ?? ""}
+                    onChange={(e) => setCustomOffset(Number(e.target.value))}
+                    className="w-40"
+                  />
+                  <input type="hidden" name="reminderOffsetDays" value={String(customOffset ?? (initialData?.reminderOffsetDays ?? 1))} />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

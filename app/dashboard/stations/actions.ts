@@ -1,8 +1,8 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { stations, tanks, fuelTypes } from "@/lib/db/schema"
-import { eq, count } from "drizzle-orm"
+import { stations, tanks, fuelTypes, fuelSupplyDistributions } from "@/lib/db/schema"
+import { eq, count, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { requireUserId } from "@/lib/session"
 
@@ -106,7 +106,25 @@ export async function getStationTanks(stationId: number) {
     .innerJoin(fuelTypes, eq(tanks.fuelTypeId, fuelTypes.id))
     .where(eq(tanks.stationId, stationId))
 
-  return stationTanks
+  const tankIds = stationTanks.map((tank) => tank.id)
+  const hasSuppliesMap = new Map<number, boolean>()
+
+  if (tankIds.length > 0) {
+    const supplyCounts = await db
+      .select({ tankId: fuelSupplyDistributions.tankId, count: count() })
+      .from(fuelSupplyDistributions)
+      .where(inArray(fuelSupplyDistributions.tankId, tankIds))
+      .groupBy(fuelSupplyDistributions.tankId)
+
+    supplyCounts.forEach((row) => {
+      hasSuppliesMap.set(row.tankId, row.count > 0)
+    })
+  }
+
+  return stationTanks.map((tank) => ({
+    ...tank,
+    hasSupplies: hasSuppliesMap.get(tank.id) ?? false,
+  }))
 }
 
 export async function getFuelTypes() {
@@ -119,7 +137,7 @@ export async function createTank(data: {
   fuelTypeId: number
   capacityTon: number
   minAlertLevel: number
-  startupBalance: number
+  currentBalance: number
 }) {
   await requireUserId()
   
@@ -131,10 +149,10 @@ export async function createTank(data: {
 
   const capacityLiter = data.capacityTon * fuelType.tonToLiter
 
-  if (data.startupBalance < 0) {
+  if (data.currentBalance < 0) {
     throw new Error("الرصيد الابتدائي لا يمكن أن يكون سالباً.")
   }
-  if (data.startupBalance > capacityLiter) {
+  if (data.currentBalance > capacityLiter) {
     throw new Error(`الرصيد الابتدائي أكبر من سعة الخزان (${capacityLiter.toLocaleString()} لتر).`)
   }
 
@@ -144,8 +162,8 @@ export async function createTank(data: {
     fuelTypeId: data.fuelTypeId,
     capacityTon: data.capacityTon,
     capacityLiter: capacityLiter,
-    startupBalance: data.startupBalance,
-    currentBalance: data.startupBalance,
+    startupBalance: data.currentBalance,
+    currentBalance: data.currentBalance,
     minAlertLevel: data.minAlertLevel,
   }).returning()
 
@@ -158,7 +176,8 @@ export async function updateTank(id: number, data: {
   fuelTypeId: number
   capacityTon: number
   minAlertLevel: number
-  startupBalance: number
+  currentBalance?: number
+  hasSupplies?: boolean
 }) {
   await requireUserId()
   
@@ -170,21 +189,31 @@ export async function updateTank(id: number, data: {
 
   const capacityLiter = data.capacityTon * fuelType.tonToLiter
 
-  if (data.startupBalance < 0) {
-    throw new Error("الرصيد الابتدائي لا يمكن أن يكون سالباً.")
-  }
-  if (data.startupBalance > capacityLiter) {
-    throw new Error(`الرصيد الابتدائي أكبر من سعة الخزان (${capacityLiter.toLocaleString()} لتر).`)
+  if (data.currentBalance !== undefined) {
+    if (data.currentBalance < 0) {
+      throw new Error("الرصيد الابتدائي لا يمكن أن يكون سالباً.")
+    }
+    if (data.currentBalance > capacityLiter) {
+      throw new Error(`الرصيد الابتدائي أكبر من سعة الخزان (${capacityLiter.toLocaleString()} لتر).`)
+    }
   }
 
-  const [updatedTank] = await db.update(tanks).set({
+  const [existing] = await db.select().from(tanks).where(eq(tanks.id, id)).limit(1)
+
+  const updates: Record<string, unknown> = {
     name: data.name,
     fuelTypeId: data.fuelTypeId,
     capacityTon: data.capacityTon,
     capacityLiter: capacityLiter,
-    startupBalance: data.startupBalance,
     minAlertLevel: data.minAlertLevel,
-  }).where(eq(tanks.id, id)).returning()
+  }
+
+  if (data.currentBalance !== undefined && !data.hasSupplies) {
+    updates.startupBalance = data.currentBalance
+    updates.currentBalance = data.currentBalance
+  }
+
+  const [updatedTank] = await db.update(tanks).set(updates).where(eq(tanks.id, id)).returning()
 
   revalidatePath("/dashboard/stations")
   return updatedTank

@@ -8,7 +8,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { navGroups } from "@/lib/navigation"
 
-export function TopBar({ userName, role }: { userName: string; role: string }) {
+export function TopBar({ userName, role, notificationCount = 0 }: { userName: string; role: string; notificationCount?: number }) {
   const pathname = usePathname()
 
   // Find current page title based on pathname
@@ -33,8 +33,8 @@ export function TopBar({ userName, role }: { userName: string; role: string }) {
       <div className="flex items-center gap-4">
         <Link href="/dashboard/alerts" className="relative text-muted-foreground hover:text-foreground">
           <Bell className="size-5" />
-          <span className="absolute right-0 top-0 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-white">
-            {/* TODO: render badge count from parent props when available */}
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white shadow">
+            {notificationCount > 0 ? (notificationCount > 99 ? "99+" : notificationCount) : null}
           </span>
           <span className="sr-only">التنبيهات</span>
         </Link>

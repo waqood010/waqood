@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { createTank, updateTank } from "@/app/dashboard/stations/actions"
 
 export function TankForm({ 
@@ -25,7 +26,7 @@ export function TankForm({
   const [loading, setLoading] = useState(false)
   const [selectedFuelType, setSelectedFuelType] = useState<number>(initialData?.fuelTypeId || (fuelTypes[0]?.id || 0))
   const [capacityTon, setCapacityTon] = useState<number>(initialData?.capacityTon || 0)
-  const [startupBalance, setStartupBalance] = useState<number>(initialData?.startupBalance ?? initialData?.currentBalance ?? 0)
+  const [currentBalance, setCurrentBalance] = useState<number>(initialData?.currentBalance ?? 0)
 
   // Compute liters immediately for UI feedback
   const fuel = fuelTypes.find(f => f.id === selectedFuelType)
@@ -39,7 +40,7 @@ export function TankForm({
     const formData = new FormData(e.currentTarget)
     const name = formData.get("name") as string
     const minAlertLevel = Number(formData.get("minAlertLevel")) || 0
-    const startupBalanceValue = Number(formData.get("startupBalance")) || 0
+    const currentBalanceValue = Number(formData.get("currentBalance")) || 0
     
     try {
       if (initialData) {
@@ -48,7 +49,8 @@ export function TankForm({
           fuelTypeId: selectedFuelType,
           capacityTon,
           minAlertLevel,
-          startupBalance: startupBalanceValue,
+          currentBalance: initialData.hasSupplies ? undefined : currentBalanceValue,
+          hasSupplies: Boolean(initialData.hasSupplies),
         })
         toast.success("تم تعديل الخزان بنجاح")
       } else {
@@ -58,7 +60,7 @@ export function TankForm({
           fuelTypeId: selectedFuelType,
           capacityTon,
           minAlertLevel,
-          startupBalance: startupBalanceValue,
+          currentBalance: currentBalanceValue,
         })
         toast.success("تم إضافة الخزان بنجاح")
       }
@@ -127,20 +129,38 @@ export function TankForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="startupBalance">الرصيد الابتدائي (باللتر)</Label>
-              <Input 
-                id="startupBalance" 
-                name="startupBalance"
-                type="number" 
-                step="0.01"
-                min={0}
-                max={computedLiters}
-                value={startupBalance || ''}
-                onChange={e => setStartupBalance(Number(e.target.value))}
-                dir="ltr"
-                className="text-right"
-              />
-              <p className="text-xs text-muted-foreground">يمكنك إدخال الرصيد الموجود في الخزان عند إضافته لأول مرة.</p>
+              <Label htmlFor="currentBalance">الرصيد الحالي (باللتر)</Label>
+              {initialData?.hasSupplies ? (
+                <div className="flex flex-col gap-2">
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <div className="flex h-10 items-center rounded-lg border border-input bg-secondary/10 px-3 text-sm text-muted-foreground cursor-help" dir="ltr">
+                        {currentBalance.toLocaleString()} لتر
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      لا يمكن تعديل الرصيد الحالي بعد وجود توريدات وقود لهذا الخزان لأن الرصيد الفعلي قد تغير بالفعل.
+                    </TooltipContent>
+                  </Tooltip>
+                  <p className="text-xs text-muted-foreground">هذا الحقل مغلق لأنه توجد توريدات سابقة لهذا الخزان.</p>
+                </div>
+              ) : (
+                <>
+                  <Input 
+                    id="currentBalance" 
+                    name="currentBalance"
+                    type="number" 
+                    step="0.01"
+                    min={0}
+                    max={computedLiters}
+                    value={currentBalance || ''}
+                    onChange={e => setCurrentBalance(Number(e.target.value))}
+                    dir="ltr"
+                    className="text-right"
+                  />
+                  <p className="text-xs text-muted-foreground">يمكنك إدخال الرصيد الموجود في الخزان عند إضافته لأول مرة.</p>
+                </>
+              )}
             </div>
 
             <div className="space-y-2">

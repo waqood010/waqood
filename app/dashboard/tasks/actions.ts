@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache"
 import { requireUserId } from "@/lib/session"
 
 const REMINDER_INTERVALS = [6, 12, 24]
-const REPEAT_FREQUENCIES = ["once", "daily", "weekly", "monthly", "quarterly", "yearly"]
+const REPEAT_FREQUENCIES = ["once", "daily", "weekly", "monthly", "semiannual", "quarterly", "yearly"]
 
 function toDate(value: string | Date) {
   return value instanceof Date ? value : new Date(value)
@@ -35,6 +35,9 @@ function getNextOccurrence(currentDueDate: Date, repeatFrequency: string) {
       break
     case "quarterly":
       next.setMonth(next.getMonth() + 3)
+      break
+    case "semiannual":
+      next.setMonth(next.getMonth() + 6)
       break
     case "yearly":
       next.setFullYear(next.getFullYear() + 1)

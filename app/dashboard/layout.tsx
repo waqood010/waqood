@@ -34,7 +34,7 @@ export default async function DashboardLayout({
         <AppSidebar role={role} />
         
         <div className="flex-1 flex flex-col min-w-0">
-          <TopBar userName={session.user.name} role={role} />
+          <TopBar userName={session.user.name} role={role} notificationCount={notificationCount} />
           <main className="flex-1 p-6 lg:p-8 overflow-auto w-full max-w-[1400px] mx-auto">
             {children}
           </main>

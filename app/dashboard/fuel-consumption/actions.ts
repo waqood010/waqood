@@ -149,6 +149,95 @@ export async function createFuelConsumption(data: {
   })
 }
 
+// ─── Update ──────────────────────────────────────────────────────────────────
+
+export async function updateFuelConsumption(id: number, data: {
+  stationId: number
+  tankId: number
+  fuelTypeId: number
+  quantity: number
+  date: Date
+  notes?: string
+  actualReading?: number
+}) {
+  const userId = await requireUserId()
+
+  const consumption = await db.query.fuelConsumption.findFirst({ where: eq(fuelConsumption.id, id) })
+  if (!consumption) throw new Error("السجل غير موجود")
+
+  const oldQuantity = consumption.quantity
+  const oldTankId = consumption.tankId
+
+  const oldTank = await db.query.tanks.findFirst({ where: eq(tanks.id, oldTankId) })
+  if (!oldTank) throw new Error("الخزان القديم غير موجود")
+
+  const newTank = await db.query.tanks.findFirst({ where: eq(tanks.id, data.tankId) })
+  if (!newTank) throw new Error("الخزان الجديد غير موجود")
+
+  return await db.transaction(async (tx) => {
+    // Adjust balances depending on whether the tank changed
+    if (oldTankId === data.tankId) {
+      const candidateBalance = oldTank.currentBalance + oldQuantity - data.quantity
+      if (candidateBalance < 0) throw new Error("الرصيد غير كافٍ لهذا التعديل")
+      if (candidateBalance > oldTank.capacityLiter) throw new Error("التعديل يتسبب بتجاوز سعة الخزان")
+
+      await tx
+        .update(tanks)
+        .set({ currentBalance: candidateBalance })
+        .where(eq(tanks.id, data.tankId))
+    } else {
+      // Restore to old tank
+      const restoredOld = oldTank.currentBalance + oldQuantity
+      if (restoredOld > oldTank.capacityLiter) throw new Error("لا يمكن استرداد الكمية للخزان القديم لأنها ستتجاوز سعة الخزان")
+
+      // Deduct from new tank
+      if (data.quantity > newTank.currentBalance) throw new Error("الرصيد في الخزان الجديد غير كافٍ")
+      const newTankBalance = newTank.currentBalance - data.quantity
+
+      await tx.update(tanks).set({ currentBalance: restoredOld }).where(eq(tanks.id, oldTankId))
+      await tx.update(tanks).set({ currentBalance: newTankBalance }).where(eq(tanks.id, data.tankId))
+    }
+
+    // Update consumption record
+    await tx
+      .update(fuelConsumption)
+      .set({
+        stationId: data.stationId,
+        tankId: data.tankId,
+        fuelTypeId: data.fuelTypeId,
+        quantity: data.quantity,
+        notes: data.notes || null,
+        date: data.date,
+      })
+      .where(eq(fuelConsumption.id, id))
+
+    // Optionally insert a measurement record
+    if (data.actualReading !== undefined && data.actualReading !== null) {
+      const theoretical = (data.tankId === oldTankId)
+        ? (oldTank.currentBalance + oldQuantity - data.quantity)
+        : (newTank.currentBalance - data.quantity)
+
+      const difference = data.actualReading - theoretical
+      let status = "matched"
+      if (Math.abs(difference) > 0 && Math.abs(difference) <= 100) status = "acceptable"
+      else if (Math.abs(difference) > 100) status = "review"
+
+      await tx.insert(tankMeasurements).values({
+        stationId: data.stationId,
+        tankId: data.tankId,
+        actualQuantity: data.actualReading,
+        theoreticalQuantity: theoretical,
+        difference,
+        status,
+        date: data.date,
+        userId,
+      })
+    }
+
+    return true
+  })
+}
+
 // ─── Delete (admin only) ─────────────────────────────────────────────────────
 
 export async function deleteFuelConsumption(id: number, role: string) {

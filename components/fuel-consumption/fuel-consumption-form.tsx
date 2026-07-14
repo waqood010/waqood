@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { StationTankSelector, type Station, type Tank } from "@/components/shared/station-tank-selector"
-import { createFuelConsumption } from "@/app/dashboard/fuel-consumption/actions"
+import { createFuelConsumption, updateFuelConsumption } from "@/app/dashboard/fuel-consumption/actions"
 import { cn } from "@/lib/utils"
 
 export function FuelConsumptionForm({
@@ -18,12 +18,14 @@ export function FuelConsumptionForm({
   stations,
   tanks,
   onSaved,
+  initialData,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   stations: Station[]
   tanks: Tank[]
   onSaved?: () => void | Promise<void>
+  initialData?: any
 }) {
   const [loading, setLoading] = useState(false)
   const [stationId, setStationId] = useState<number | null>(null)
@@ -44,6 +46,18 @@ export function FuelConsumptionForm({
     setSelectedTank(updatedTank)
   }, [tankId, tanks])
 
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0])
+
+  // populate when editing
+  useEffect(() => {
+    if (initialData) {
+      setStationId(initialData.station?.id ?? null)
+      setTankId(initialData.tank?.id ?? null)
+      setQuantity(initialData.quantity ?? 0)
+      setDate(initialData.date ? new Date(initialData.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0])
+      setSelectedTank(initialData.tank ?? null)
+    }
+  }, [initialData])
   useEffect(() => {
     if (!open) {
       setStationId(null)
@@ -75,18 +89,30 @@ export function FuelConsumptionForm({
     setLoading(true)
     const formData = new FormData(e.currentTarget)
     const notes = formData.get("notes") as string
-    const dateStr = formData.get("date") as string
+    const dateStr = date
 
     try {
-      await createFuelConsumption({
-        stationId,
-        tankId,
-        fuelTypeId: selectedTank.fuelTypeId,
-        quantity,
-        date: new Date(dateStr),
-        notes,
-        actualReading: includeActualReading ? actualReading : undefined,
-      })
+      if (initialData && initialData.id) {
+        await updateFuelConsumption(initialData.id, {
+          stationId: stationId as number,
+          tankId: tankId as number,
+          fuelTypeId: selectedTank!.fuelTypeId,
+          quantity,
+          date: new Date(dateStr),
+          notes,
+          actualReading: includeActualReading ? actualReading : undefined,
+        })
+      } else {
+        await createFuelConsumption({
+          stationId: stationId as number,
+          tankId: tankId as number,
+          fuelTypeId: selectedTank!.fuelTypeId,
+          quantity,
+          date: new Date(dateStr),
+          notes,
+          actualReading: includeActualReading ? actualReading : undefined,
+        })
+      }
       toast.success("تم تسجيل الاستهلاك بنجاح")
       if (onSaved) {
         await onSaved()
@@ -119,7 +145,8 @@ export function FuelConsumptionForm({
               name="date"
               type="date"
               required
-              defaultValue={new Date().toISOString().split("T")[0]}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
             />
           </div>
 

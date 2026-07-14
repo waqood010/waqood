@@ -5,7 +5,7 @@ import { FuelConsumptionForm } from "./fuel-consumption-form"
 import { deleteFuelConsumption, getFuelConsumptions, getStationsWithTanks } from "@/app/dashboard/fuel-consumption/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Trash2, Search, Plus, Loader2 } from "lucide-react"
+import { Trash2, Search, Plus, Loader2, Edit2 } from "lucide-react"
 import { toast } from "sonner"
 import { confirmModal } from "@/components/ui/confirm"
 import type { Station, Tank } from "@/components/shared/station-tank-selector"
@@ -35,6 +35,7 @@ export function FuelConsumptionTable({
   const [isLoading, setIsLoading] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [currentTanks, setCurrentTanks] = useState<Tank[]>(tanks)
+  const [editing, setEditing] = useState<any | null>(null)
 
   useEffect(() => {
     setCurrentTanks(tanks)
@@ -260,14 +261,24 @@ export function FuelConsumptionTable({
                       </td>
                       {isAdmin && (
                         <td className="px-4 py-3 text-left">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="hover:bg-destructive/10 hover:text-destructive size-8"
-                            onClick={() => handleDelete(row.id)}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="hover:bg-primary/10 size-8"
+                              onClick={() => { setEditing(row); setFormOpen(true) }}
+                            >
+                              <Edit2 className="size-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="hover:bg-destructive/10 hover:text-destructive size-8"
+                              onClick={() => handleDelete(row.id)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
                         </td>
                       )}
                     </tr>
@@ -293,9 +304,13 @@ export function FuelConsumptionTable({
       {formOpen && (
         <FuelConsumptionForm
           open={formOpen}
-          onOpenChange={setFormOpen}
+          onOpenChange={(v) => {
+            setFormOpen(v)
+            if (!v) setEditing(null)
+          }}
           stations={stations}
           tanks={currentTanks}
+          initialData={editing ?? undefined}
           onSaved={handleSave}
         />
       )}

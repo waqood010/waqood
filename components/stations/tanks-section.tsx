@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { confirmModal } from "@/components/ui/confirm"
 import { cn } from "@/lib/utils"
 
-export function TanksSection({ stationId, fuelTypes, isAdmin }: { stationId: number, fuelTypes: any[], isAdmin: boolean }) {
+export function TanksSection({ stationId, fuelTypes, isAdmin, onReload }: { stationId: number, fuelTypes: any[], isAdmin: boolean, onReload: () => void }) {
   const [tanks, setTanks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -35,7 +35,10 @@ export function TanksSection({ stationId, fuelTypes, isAdmin }: { stationId: num
   const handleFormChange = (open: boolean) => {
     setFormOpen(open)
     if (!open) {
-      setTimeout(loadTanks, 500) // slight delay to allow revalidation to settle
+      setTimeout(async () => {
+        await loadTanks()
+        onReload()
+      }, 500) // slight delay to allow revalidation to settle
     }
   }
 
@@ -44,7 +47,8 @@ export function TanksSection({ stationId, fuelTypes, isAdmin }: { stationId: num
     try {
       await deleteTank(id)
       toast.success("تم حذف الخزان")
-      loadTanks()
+      await loadTanks()
+      onReload()
     } catch (err: any) {
       toast.error(err.message || "فشل في حذف الخزان")
     }

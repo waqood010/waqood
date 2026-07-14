@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
@@ -34,6 +34,27 @@ export function FuelConsumptionForm({
   const [includeActualReading, setIncludeActualReading] = useState(false)
   const [actualReading, setActualReading] = useState<number>(0)
 
+  useEffect(() => {
+    if (tankId === null) {
+      setSelectedTank(null)
+      return
+    }
+
+    const updatedTank = tanks.find((tank) => tank.id === tankId) ?? null
+    setSelectedTank(updatedTank)
+  }, [tankId, tanks])
+
+  useEffect(() => {
+    if (!open) {
+      setStationId(null)
+      setTankId(null)
+      setSelectedTank(null)
+      setQuantity(0)
+      setIncludeActualReading(false)
+      setActualReading(0)
+    }
+  }, [open])
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!stationId || !tankId || !selectedTank) {
@@ -41,8 +62,8 @@ export function FuelConsumptionForm({
       return
     }
 
-    if (quantity <= 0) {
-      toast.error("الكمية يجب أن تكون أكبر من صفر")
+    if (quantity < 0) {
+      toast.error("الكمية يجب ألا تكون سالبة")
       return
     }
 
@@ -131,7 +152,7 @@ export function FuelConsumptionForm({
               type="number"
               step="0.01"
               required
-              value={quantity || ""}
+              value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
               dir="ltr"
               className="text-right"
@@ -168,7 +189,7 @@ export function FuelConsumptionForm({
                     type="number"
                     step="0.01"
                     required={includeActualReading}
-                    value={actualReading || ""}
+                    value={actualReading}
                     onChange={(e) => setActualReading(Number(e.target.value))}
                     dir="ltr"
                     className="text-right"

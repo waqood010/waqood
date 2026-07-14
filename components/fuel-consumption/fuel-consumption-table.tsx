@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { FuelConsumptionForm } from "./fuel-consumption-form"
-import { deleteFuelConsumption, getFuelConsumptions } from "@/app/dashboard/fuel-consumption/actions"
+import { deleteFuelConsumption, getFuelConsumptions, getStationsWithTanks } from "@/app/dashboard/fuel-consumption/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Trash2, Search, Plus, Loader2 } from "lucide-react"
@@ -34,6 +34,11 @@ export function FuelConsumptionTable({
   const [avgType, setAvgType] = useState<"daily" | "weekly" | "monthly">("daily")
   const [isLoading, setIsLoading] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [currentTanks, setCurrentTanks] = useState<Tank[]>(tanks)
+
+  useEffect(() => {
+    setCurrentTanks(tanks)
+  }, [tanks])
 
   const parseLocalDate = (dateStr: string, endOfDay = false) => {
     if (!dateStr) return undefined
@@ -62,6 +67,15 @@ export function FuelConsumptionTable({
     }
   }
 
+  const loadStationsAndTanks = async () => {
+    try {
+      const result = await getStationsWithTanks()
+      setCurrentTanks(result.tanks)
+    } catch (err: any) {
+      toast.error("فشل في تحديث بيانات الخزانات")
+    }
+  }
+
   useEffect(() => {
     if (!isMounted) {
       setIsMounted(true)
@@ -70,11 +84,17 @@ export function FuelConsumptionTable({
     loadData()
   }, [selectedStationId, fromDate, toDate])
 
+  const handleSave = async () => {
+    await loadData()
+    await loadStationsAndTanks()
+  }
+
   const handleDelete = async (id: number) => {
     if (!(await confirmModal("هل أنت متأكد من حذف هذا السجل؟ سيتم إرجاع الكمية إلى الخزان ولن يتم حذف سجل القياس الفعلي إن وُجد."))) return
     try {
       await deleteFuelConsumption(id, isAdmin ? "admin" : "user")
       setData(data.filter((d) => d.id !== id))
+      await loadStationsAndTanks()
       toast.success("تم حذف السجل واسترداد الكمية")
     } catch (err: any) {
       toast.error(err.message || "فشل في حذف السجل")
@@ -275,8 +295,8 @@ export function FuelConsumptionTable({
           open={formOpen}
           onOpenChange={setFormOpen}
           stations={stations}
-          tanks={tanks}
-          onSaved={loadData}
+          tanks={currentTanks}
+          onSaved={handleSave}
         />
       )}
     </div>

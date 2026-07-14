@@ -3,7 +3,7 @@
 import React, { useState } from "react"
 import { StationForm } from "./station-form"
 import { TanksSection } from "./tanks-section"
-import { deleteStation } from "@/app/dashboard/stations/actions"
+import { deleteStation, getStations } from "@/app/dashboard/stations/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Edit, Trash2, ChevronDown, ChevronUp, Search, Plus, Building2 } from "lucide-react"
@@ -37,6 +37,15 @@ export function StationsTable({ initialStations, fuelTypes, isAdmin }: { initial
   }
 
   const filteredStations = stations.filter(s => s.name.includes(search))
+
+  const reloadStations = async () => {
+    try {
+      const latestStations = await getStations()
+      setStations(latestStations)
+    } catch (err) {
+      toast.error("فشل في تحديث بيانات المحطات")
+    }
+  }
 
   // Calculate tank stats for each station
   const getStationTankStats = (station: any) => {
@@ -153,7 +162,12 @@ export function StationsTable({ initialStations, fuelTypes, isAdmin }: { initial
                     {expandedRows.has(station.id) && (
                       <tr>
                         <td colSpan={isAdmin ? 5 : 4} className="p-0 border-b-0 bg-secondary/5">
-                          <TanksSection stationId={station.id} fuelTypes={fuelTypes} isAdmin={isAdmin} />
+                          <TanksSection
+                            stationId={station.id}
+                            fuelTypes={fuelTypes}
+                            isAdmin={isAdmin}
+                            onReload={reloadStations}
+                          />
                         </td>
                       </tr>
                     )}

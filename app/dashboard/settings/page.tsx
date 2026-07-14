@@ -74,7 +74,7 @@ export default async function SettingsPage() {
         </div>
 
         {/* System Settings Section */}
-        <div className="border rounded-lg p-6 shadow-sm lg:col-span-2">
+        {/* <div className="border rounded-lg p-6 shadow-sm lg:col-span-2">
           <h3 className="text-xl font-bold mb-1 flex items-center gap-2 border-b pb-3 mb-4">
             <Settings className="size-5 text-primary" />
             الإعدادات العامة
@@ -113,7 +113,7 @@ export default async function SettingsPage() {
               <p>لا توجد إعدادات عامة محددة بعد.</p>
             </div>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   )

@@ -1,18 +1,25 @@
-import { getSession } from "@/lib/session"
+import { getSession, isAdminRole, isSuperAdminRole } from "@/lib/session"
 import { Settings, ShieldAlert, Flame } from "lucide-react"
 import { db } from "@/lib/db"
-import { fuelTypes, systemSettings } from "@/lib/db/schema"
+import { desc } from "drizzle-orm"
+import { fuelTypes, systemSettings, user } from "@/lib/db/schema"
 import { redirect } from "next/navigation"
 import { FuelTypesTable } from "@/components/settings/fuel-types-table"
+import { UsersTable } from "@/components/settings/users-table"
+import { ChangePasswordForm } from "@/components/settings/change-password-form"
 
 export default async function SettingsPage() {
   const session = await getSession()
-  if (session?.user?.role !== "admin") {
+  const role = session?.user?.role || "user"
+  if (!isAdminRole(role)) {
     redirect("/dashboard")
   }
 
+  const canCreateUsers = isAdminRole(role)
+  const isSuperAdmin = isSuperAdminRole(role)
   const allFuelTypes = await db.select().from(fuelTypes)
   const settings = await db.select().from(systemSettings)
+  const users = await db.select().from(user).orderBy(desc(user.createdAt))
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,6 +47,30 @@ export default async function SettingsPage() {
             تحديد أنواع الوقود المتاحة بالنظام ومعاملات التحويل بين الطن واللتر وحدود التنبيه.
           </p>
           <FuelTypesTable initialData={allFuelTypes} />
+        </div>
+
+        {/* User Management Section */}
+        <div className="border rounded-lg p-6 shadow-sm lg:col-span-2">
+          <h3 className="text-xl font-bold mb-1 flex items-center gap-2 border-b pb-3 mb-4">
+            <Settings className="size-5 text-primary" />
+            إدارة المستخدمين
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            أضف مستخدمين جدد بصلاحية مدير نظام أو مستخدم عادي.
+          </p>
+          <UsersTable initialData={users} canCreate={canCreateUsers} isSuperAdmin={isSuperAdmin} />
+        </div>
+
+        {/* Change Password Section */}
+        <div className="border rounded-lg p-6 shadow-sm lg:col-span-2">
+          <h3 className="text-xl font-bold mb-1 flex items-center gap-2 border-b pb-3 mb-4">
+            <Settings className="size-5 text-primary" />
+            تغيير كلمة المرور
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            يمكنك تغيير كلمة المرور الخاصة بحسابك الحالي.
+          </p>
+          <ChangePasswordForm />
         </div>
 
         {/* System Settings Section */}

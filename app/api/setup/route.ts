@@ -22,14 +22,15 @@ export async function GET(request: Request) {
 
     const res = await auth.api.signUpEmail({
       body: {
-        email: "admin@transport.gov.eg",
+        email: "superadmin@transport.gov.eg",
         password: adminPassword,
         name: "مدير النظام",
-        username: "admin",
+        username: "superadmin",
+        role: "superadmin",
       },
     })
 
-    await db.update(user).set({ role: "admin" }).where(eq(user.id, res.user.id))
+    await db.update(user).set({ role: "superadmin" }).where(eq(user.id, res.user.id))
 
     return NextResponse.json({
       message: "Admin user created successfully",

@@ -6,6 +6,7 @@ import { TankForm } from "./tank-form"
 import { Button } from "@/components/ui/button"
 import { Plus, Edit, Trash2, Loader2, Droplet } from "lucide-react"
 import { toast } from "sonner"
+import { confirmModal } from "@/components/ui/confirm"
 import { cn } from "@/lib/utils"
 
 export function TanksSection({ stationId, fuelTypes, isAdmin }: { stationId: number, fuelTypes: any[], isAdmin: boolean }) {
@@ -39,7 +40,7 @@ export function TanksSection({ stationId, fuelTypes, isAdmin }: { stationId: num
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الخزان؟")) return
+    if (!(await confirmModal("هل أنت متأكد من حذف هذا الخزان؟"))) return
     try {
       await deleteTank(id)
       toast.success("تم حذف الخزان")

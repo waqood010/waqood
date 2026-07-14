@@ -5,7 +5,7 @@ import { Building2 } from "lucide-react"
 
 export default async function StationsPage() {
   const session = await getSession()
-  const isAdmin = session?.user?.role === "admin"
+  const isAdmin = session?.user?.role !== "user"
 
   // Fetch all required data for the page
   const initialStations = await getStations()

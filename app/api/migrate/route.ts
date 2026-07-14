@@ -32,6 +32,14 @@ export async function GET() {
       `
     },
     {
+      name: "Add startup_balance to tanks",
+      query: `ALTER TABLE tanks ADD COLUMN IF NOT EXISTS startup_balance DOUBLE PRECISION NOT NULL DEFAULT 0;`
+    },
+    {
+      name: "Initialize startup_balance from existing current_balance",
+      query: `UPDATE tanks SET startup_balance = current_balance WHERE startup_balance = 0;`
+    },
+    {
       name: "Add total_quantity to fuel_supplies",
       query: `ALTER TABLE fuel_supplies ADD COLUMN IF NOT EXISTS total_quantity DOUBLE PRECISION NOT NULL DEFAULT 0;`
     },
@@ -72,6 +80,46 @@ export async function GET() {
     {
       name: "Add contract_number to oil_supplies",
       query: `ALTER TABLE oil_supplies ADD COLUMN IF NOT EXISTS contract_number TEXT;`
+    },
+    {
+      name: "Create oil_sample_analyses table",
+      query: `
+        CREATE TABLE IF NOT EXISTS oil_sample_analyses (
+          id SERIAL PRIMARY KEY,
+          oil_id INTEGER NOT NULL REFERENCES oils(id),
+          analysis_number TEXT NOT NULL,
+          analysis_date TIMESTAMP NOT NULL DEFAULT NOW(),
+          result_date TIMESTAMP,
+          status TEXT NOT NULL DEFAULT 'review',
+          cost DOUBLE PRECISION NOT NULL DEFAULT 0,
+          notes TEXT,
+          "userId" TEXT NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+      `
+    },
+    {
+      name: "Create tasks table",
+      query: `
+        CREATE TABLE IF NOT EXISTS tasks (
+          id SERIAL PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT,
+          due_date TIMESTAMP NOT NULL,
+          repeat_frequency TEXT NOT NULL DEFAULT 'once',
+          reminder_offset_days INTEGER NOT NULL DEFAULT 1,
+          reminder_interval_hours INTEGER NOT NULL DEFAULT 24,
+          next_reminder_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          status TEXT NOT NULL DEFAULT 'pending',
+          is_read BOOLEAN NOT NULL DEFAULT FALSE,
+          "userId" TEXT NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+      `
+    },
+    {
+      name: "Add related_task_id to alerts",
+      query: `ALTER TABLE alerts ADD COLUMN IF NOT EXISTS related_task_id INTEGER;`
     },
     {
       name: "Add next_refill_date to oil_consumption_rates",

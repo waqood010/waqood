@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { OilTransactionForm } from "./oil-transaction-form"
 import { deleteOilTransaction } from "@/app/dashboard/oil-transactions/actions"
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Trash2, Search, Plus, Edit, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { confirmModal } from "@/components/ui/confirm"
 import { format } from "date-fns"
 import { ar } from "date-fns/locale"
 
@@ -36,10 +37,14 @@ export function OilTransactionsTable({
   const searchParams = useSearchParams()
   const pathname = usePathname()
 
-  const [data] = useState(initialData)
+  const [data, setData] = useState(initialData)
   const [formOpen, setFormOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    setData(initialData)
+  }, [initialData])
 
   const currentQ = searchParams?.get("q") ?? ""
   const currentConsumer = searchParams?.get("consumerId") ?? ""
@@ -49,10 +54,11 @@ export function OilTransactionsTable({
   const currentPage = Number(searchParams?.get("page") ?? page ?? 1)
 
   const handleDelete = async (id: number) => {
-    if (!confirm("هل أنت متأكد من حذف عملية الصرف هذه؟")) return
+    if (!(await confirmModal("هل أنت متأكد من حذف عملية الصرف هذه؟"))) return
     setIsDeleting(true)
     try {
       await deleteOilTransaction(id)
+      setData((prev) => prev.filter((item) => item.id !== id))
       toast.success("تم الحذف بنجاح")
       router.refresh()
     } catch (err: any) {

@@ -5,7 +5,7 @@ import { Droplets } from "lucide-react"
 
 export default async function OilsPage() {
   const session = await getSession()
-  const isAdmin = session?.user?.role === "admin"
+  const isAdmin = session?.user?.role !== "user"
 
   const initialData = await getOils()
 

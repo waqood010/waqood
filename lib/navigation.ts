@@ -12,6 +12,7 @@ import {
   Bell,
   Settings,
   History,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react"
 
@@ -45,15 +46,16 @@ export const navGroups: NavGroup[] = [
     items: [
       { title: "أصناف الزيوت", href: "/dashboard/oils", icon: Droplets },
       { title: "توريدات الزيوت", href: "/dashboard/oil-supplies", icon: PackagePlus },
+      { title: "تحليل العينات", href: "/dashboard/oil-sample-analysis", icon: BarChart3 },
       { title: "الجهات المستهلكة ومعدلات الاستهلاك", href: "/dashboard/consumers", icon: Users },
       { title: "صرف الزيوت", href: "/dashboard/oil-transactions", icon: HandCoins },
     ],
   },
   {
-    label: "التقارير والنظام",
+    label: "النظام",
     items: [
-      { title: "التقارير", href: "/dashboard/reports", icon: BarChart3 },
       { title: "التنبيهات", href: "/dashboard/alerts", icon: Bell },
+      { title: "قائمة المهام", href: "/dashboard/tasks", icon: ClipboardList },
       { title: "سجل العمليات", href: "/dashboard/audit-log", icon: History, adminOnly: true },
       { title: "الإعدادات", href: "/dashboard/settings", icon: Settings, adminOnly: true },
     ],

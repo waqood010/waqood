@@ -20,6 +20,7 @@ export async function getStations() {
       name: tanks.name,
       capacityTon: tanks.capacityTon,
       capacityLiter: tanks.capacityLiter,
+      startupBalance: tanks.startupBalance,
       currentBalance: tanks.currentBalance,
       minAlertLevel: tanks.minAlertLevel,
       fuelTypeId: tanks.fuelTypeId,
@@ -92,6 +93,7 @@ export async function getStationTanks(stationId: number) {
       stationId: tanks.stationId,
       capacityTon: tanks.capacityTon,
       capacityLiter: tanks.capacityLiter,
+      startupBalance: tanks.startupBalance,
       currentBalance: tanks.currentBalance,
       minAlertLevel: tanks.minAlertLevel,
       fuelType: {
@@ -117,6 +119,7 @@ export async function createTank(data: {
   fuelTypeId: number
   capacityTon: number
   minAlertLevel: number
+  startupBalance: number
 }) {
   await requireUserId()
   
@@ -128,14 +131,22 @@ export async function createTank(data: {
 
   const capacityLiter = data.capacityTon * fuelType.tonToLiter
 
+  if (data.startupBalance < 0) {
+    throw new Error("الرصيد الابتدائي لا يمكن أن يكون سالباً.")
+  }
+  if (data.startupBalance > capacityLiter) {
+    throw new Error(`الرصيد الابتدائي أكبر من سعة الخزان (${capacityLiter.toLocaleString()} لتر).`)
+  }
+
   const [newTank] = await db.insert(tanks).values({
     name: data.name,
     stationId: data.stationId,
     fuelTypeId: data.fuelTypeId,
     capacityTon: data.capacityTon,
     capacityLiter: capacityLiter,
+    startupBalance: data.startupBalance,
+    currentBalance: data.startupBalance,
     minAlertLevel: data.minAlertLevel,
-    currentBalance: 0,
   }).returning()
 
   revalidatePath("/dashboard/stations")
@@ -147,6 +158,7 @@ export async function updateTank(id: number, data: {
   fuelTypeId: number
   capacityTon: number
   minAlertLevel: number
+  startupBalance: number
 }) {
   await requireUserId()
   
@@ -158,11 +170,19 @@ export async function updateTank(id: number, data: {
 
   const capacityLiter = data.capacityTon * fuelType.tonToLiter
 
+  if (data.startupBalance < 0) {
+    throw new Error("الرصيد الابتدائي لا يمكن أن يكون سالباً.")
+  }
+  if (data.startupBalance > capacityLiter) {
+    throw new Error(`الرصيد الابتدائي أكبر من سعة الخزان (${capacityLiter.toLocaleString()} لتر).`)
+  }
+
   const [updatedTank] = await db.update(tanks).set({
     name: data.name,
     fuelTypeId: data.fuelTypeId,
     capacityTon: data.capacityTon,
     capacityLiter: capacityLiter,
+    startupBalance: data.startupBalance,
     minAlertLevel: data.minAlertLevel,
   }).where(eq(tanks.id, id)).returning()
 

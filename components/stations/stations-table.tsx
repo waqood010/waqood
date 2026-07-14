@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Edit, Trash2, ChevronDown, ChevronUp, Search, Plus, Building2 } from "lucide-react"
 import { toast } from "sonner"
+import { confirmModal } from "@/components/ui/confirm"
 
 export function StationsTable({ initialStations, fuelTypes, isAdmin }: { initialStations: any[], fuelTypes: any[], isAdmin: boolean }) {
   const [stations, setStations] = useState(initialStations)
@@ -25,7 +26,7 @@ export function StationsTable({ initialStations, fuelTypes, isAdmin }: { initial
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm("هل أنت متأكد من حذف هذه المحطة؟ تأكد أولاً من حذف جميع خزاناتها.")) return
+    if (!(await confirmModal("هل أنت متأكد من حذف هذه المحطة؟ تأكد أولاً من حذف جميع خزاناتها."))) return
     try {
       await deleteStation(id)
       setStations(stations.filter(s => s.id !== id))

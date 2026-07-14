@@ -3,7 +3,7 @@
 import * as React from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { ShieldCheck, LogOut, Loader2 } from "lucide-react"
+import { ShieldCheck, LogOut, Loader2, X } from "lucide-react"
 
 import {
   Sidebar,
@@ -16,7 +16,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 import { navGroups } from "@/lib/navigation"
 import { authClient } from "@/lib/auth-client"
 
@@ -24,6 +26,7 @@ export function AppSidebar({ role }: { role: string }) {
   const pathname = usePathname()
   const [loadingHref, setLoadingHref] = React.useState<string | null>(null)
   const [isSigningOut, setIsSigningOut] = React.useState(false)
+  const { toggleSidebar, isMobile } = useSidebar()
 
   React.useEffect(() => {
     setLoadingHref(null)
@@ -32,25 +35,39 @@ export function AppSidebar({ role }: { role: string }) {
   return (
     <Sidebar side="right" variant="sidebar" collapsible="icon" dir="rtl">
       <SidebarHeader className="border-b border-border/50 py-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="hover:bg-transparent">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
-                <ShieldCheck className="size-5" />
-              </div>
-              <div className="flex flex-col gap-0.5 leading-none px-2 text-right w-full overflow-hidden">
-                <span className="font-semibold text-base truncate">جهاز النقل</span>
-                <span className="text-xs text-muted-foreground truncate">إدارة الوقود والزيوت</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <div className="flex items-center justify-between gap-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" className="hover:bg-transparent">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
+                  <ShieldCheck className="size-5" />
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none px-2 text-right w-full overflow-hidden">
+                  <span className="font-semibold text-base truncate">جهاز النقل</span>
+                  <span className="text-xs text-muted-foreground truncate">إدارة الوقود والزيوت</span>
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={toggleSidebar}
+              aria-label="إغلاق الشريط الجانبي"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-4 gap-6">
         {navGroups.map((group) => {
           const visibleItems = group.items.filter(
-            (item) => !item.adminOnly || role === "admin"
+            (item) => !item.adminOnly || role !== "user"
           )
 
           if (visibleItems.length === 0) return null

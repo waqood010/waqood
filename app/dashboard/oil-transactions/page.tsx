@@ -5,7 +5,7 @@ import { OilTransactionsTable } from "@/components/oil-transactions/oil-transact
 
 export default async function OilTransactionsPage({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }) {
   const session = await getSession()
-  const isAdmin = session?.user?.role === "admin"
+  const isAdmin = session?.user?.role !== "user"
 
   // Default dates: From the 1st of the current month to today
   const now = new Date()

@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/session"
+import { getSession, isAdminRole } from "@/lib/session"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Flame, Droplets, Building2, AlertTriangle, Clock } from "lucide-react"
@@ -11,7 +11,7 @@ import { ar } from "date-fns/locale"
 export default async function DashboardPage() {
   const session = await getSession()
   const role = session?.user?.role || "user"
-  const isAdmin = role === "admin"
+  const isAdmin = isAdminRole(role)
 
   // Fetch live metrics
   const [

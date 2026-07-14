@@ -25,6 +25,7 @@ export function TankForm({
   const [loading, setLoading] = useState(false)
   const [selectedFuelType, setSelectedFuelType] = useState<number>(initialData?.fuelTypeId || (fuelTypes[0]?.id || 0))
   const [capacityTon, setCapacityTon] = useState<number>(initialData?.capacityTon || 0)
+  const [startupBalance, setStartupBalance] = useState<number>(initialData?.startupBalance ?? initialData?.currentBalance ?? 0)
 
   // Compute liters immediately for UI feedback
   const fuel = fuelTypes.find(f => f.id === selectedFuelType)
@@ -38,6 +39,7 @@ export function TankForm({
     const formData = new FormData(e.currentTarget)
     const name = formData.get("name") as string
     const minAlertLevel = Number(formData.get("minAlertLevel")) || 0
+    const startupBalanceValue = Number(formData.get("startupBalance")) || 0
     
     try {
       if (initialData) {
@@ -45,7 +47,8 @@ export function TankForm({
           name, 
           fuelTypeId: selectedFuelType,
           capacityTon,
-          minAlertLevel
+          minAlertLevel,
+          startupBalance: startupBalanceValue,
         })
         toast.success("تم تعديل الخزان بنجاح")
       } else {
@@ -54,7 +57,8 @@ export function TankForm({
           stationId,
           fuelTypeId: selectedFuelType,
           capacityTon,
-          minAlertLevel
+          minAlertLevel,
+          startupBalance: startupBalanceValue,
         })
         toast.success("تم إضافة الخزان بنجاح")
       }
@@ -120,6 +124,23 @@ export function TankForm({
                   {computedLiters.toLocaleString()}
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="startupBalance">الرصيد الابتدائي (باللتر)</Label>
+              <Input 
+                id="startupBalance" 
+                name="startupBalance"
+                type="number" 
+                step="0.01"
+                min={0}
+                max={computedLiters}
+                value={startupBalance || ''}
+                onChange={e => setStartupBalance(Number(e.target.value))}
+                dir="ltr"
+                className="text-right"
+              />
+              <p className="text-xs text-muted-foreground">يمكنك إدخال الرصيد الموجود في الخزان عند إضافته لأول مرة.</p>
             </div>
 
             <div className="space-y-2">

@@ -1,10 +1,11 @@
 "use server"
 
+import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { systemSettings, fuelTypes } from "@/lib/db/schema"
+import { systemSettings, fuelTypes, user } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
-import { requireUserId } from "@/lib/session"
+import { requireUserId, getCurrentUser, isAdminRole } from "@/lib/session"
 import { logAction } from "@/lib/db/audit"
 
 // -- Fuel Types Actions --
@@ -49,6 +50,45 @@ export async function deleteFuelType(id: number) {
   await logAction("delete", "fuel_types", id, existing, null)
   revalidatePath("/dashboard/settings")
   return { success: true }
+}
+
+export async function createUser(data: { name: string; username: string; password: string; role: "admin" | "user" }) {
+  await requireUserId()
+
+  const current = await getCurrentUser()
+  if (!current || !isAdminRole(current.role)) throw new Error("Unauthorized")
+
+  // Admins (non-super) can only create normal users
+  if (current.role !== "superadmin" && data.role === "admin") {
+    throw new Error("Unauthorized")
+  }
+
+  const email = `${data.username}@transport.gov.eg`
+  const signUpRes = await auth.api.signUpEmail({
+    body: {
+      email,
+      password: data.password,
+      name: data.name,
+      username: data.username,
+      role: data.role,
+    },
+  })
+
+  const userId = signUpRes.user.id
+  await db.update(user).set({ role: data.role }).where(eq(user.id, userId))
+
+  const newUser = {
+    id: userId,
+    name: data.name,
+    username: data.username,
+    email,
+    role: data.role,
+    createdAt: new Date().toISOString(),
+  }
+
+  await logAction("create", "user", userId, null, newUser)
+  revalidatePath("/dashboard/settings")
+  return newUser
 }
 
 // -- System Settings Actions --

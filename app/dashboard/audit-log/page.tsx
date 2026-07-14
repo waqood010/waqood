@@ -27,9 +27,11 @@ const TABLE_LABELS: Record<string, string> = {
   oil_consumption_rates: "معدلات الاستهلاك",
 }
 
+import { isAdminRole } from "@/lib/session"
+
 export default async function AuditLogPage() {
   const session = await getSession()
-  if (session?.user?.role !== "admin") {
+  if (!isAdminRole(session?.user?.role)) {
     redirect("/dashboard")
   }
 

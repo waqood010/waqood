@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import { oils, oilTransactions, oilSupplies } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
-import { requireUserId } from "@/lib/session"
+import { requireUserId, isAdminRole } from "@/lib/session"
 
 export async function getOils() {
   await requireUserId()
@@ -81,7 +81,7 @@ export async function updateOil(id: number, data: {
 }
 
 export async function deleteOil(id: number, role: string) {
-  if (role !== "admin") throw new Error("غير مصرح لك بهذا الإجراء")
+  if (!isAdminRole(role)) throw new Error("غير مصرح لك بهذا الإجراء")
 
   // Check if oil has transactions or supplies
   const transactions = await db.select().from(oilTransactions).where(eq(oilTransactions.oilId, id)).limit(1)

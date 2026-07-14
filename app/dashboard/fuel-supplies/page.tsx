@@ -5,7 +5,7 @@ import { TruckIcon } from "lucide-react"
 
 export default async function FuelSuppliesPage() {
   const session = await getSession()
-  const isAdmin = session?.user?.role === "admin"
+  const isAdmin = session?.user?.role !== "user"
 
   // Fetch data
   const initialData = await getFuelSupplies()

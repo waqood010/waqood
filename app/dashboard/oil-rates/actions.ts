@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import { oilConsumptionRates, consumers, oils } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
-import { requireUserId } from "@/lib/session"
+import { requireUserId, isAdminRole } from "@/lib/session"
 
 export async function getOilRates() {
   await requireUserId()
@@ -77,7 +77,7 @@ export async function updateOilRate(id: number, data: { rate: number; unit: stri
 }
 
 export async function deleteOilRate(id: number, role: string) {
-  if (role !== "admin") throw new Error("غير مصرح لك بهذا الإجراء")
+  if (!isAdminRole(role)) throw new Error("غير مصرح لك بهذا الإجراء")
 
   await db.delete(oilConsumptionRates).where(eq(oilConsumptionRates.id, id))
   revalidatePath("/dashboard/oil-rates")

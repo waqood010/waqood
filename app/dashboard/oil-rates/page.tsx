@@ -5,7 +5,7 @@ import { OilRatesTable } from "@/components/oil-rates/oil-rates-table"
 
 export default async function OilRatesPage() {
   const session = await getSession()
-  const isAdmin = session?.user?.role === "admin"
+  const isAdmin = session?.user?.role !== "user"
 
   const initialData = await getOilRates()
   const { consumers, oils } = await getConsumersAndOils()

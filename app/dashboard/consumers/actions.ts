@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import { consumers, oilConsumptionRates, oilTransactions, oils } from "@/lib/db/schema"
 import { eq, and, desc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
-import { requireUserId } from "@/lib/session"
+import { requireUserId, isAdminRole } from "@/lib/session"
 import { addDays, addMonths } from "date-fns"
 
 export async function getConsumers() {
@@ -124,7 +124,7 @@ export async function updateOilRate(id: number, data: { rate: number; unit: stri
 }
 
 export async function deleteOilRate(id: number, role: string) {
-  if (role !== "admin") throw new Error("غير مصرح لك بهذا الإجراء")
+  if (!isAdminRole(role)) throw new Error("غير مصرح لك بهذا الإجراء")
 
   await db.delete(oilConsumptionRates).where(eq(oilConsumptionRates.id, id))
   revalidatePath("/dashboard/consumers")
@@ -171,7 +171,7 @@ export async function updateConsumer(id: number, data: { name: string; type?: st
 }
 
 export async function deleteConsumer(id: number, role: string) {
-  if (role !== "admin") throw new Error("غير مصرح لك بهذا الإجراء")
+  if (!isAdminRole(role)) throw new Error("غير مصرح لك بهذا الإجراء")
 
   const rates = await db.select().from(oilConsumptionRates).where(eq(oilConsumptionRates.consumerId, id)).limit(1)
   const transactions = await db.select().from(oilTransactions).where(eq(oilTransactions.consumerId, id)).limit(1)

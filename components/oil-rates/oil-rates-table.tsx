@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Edit, Trash2, Search, Plus } from "lucide-react"
 import { toast } from "sonner"
+import { confirmModal } from "@/components/ui/confirm"
 
 export function OilRatesTable({ 
   initialData, 
@@ -25,7 +26,7 @@ export function OilRatesTable({
   const [editingItem, setEditingItem] = useState<any>(null)
 
   const handleDelete = async (id: number) => {
-    if (!confirm("هل أنت متأكد من حذف هذا المعدل؟")) return
+    if (!(await confirmModal("هل أنت متأكد من حذف هذا المعدل؟"))) return
     try {
       await deleteOilRate(id, isAdmin ? "admin" : "user")
       setData(data.filter((d) => d.id !== id))

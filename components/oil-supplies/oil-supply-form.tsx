@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, X } from "lucide-react"
 
 export function OilSupplyForm({ 
   open, 
@@ -92,8 +92,18 @@ export function OilSupplyForm({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+        <DialogHeader className="relative">
           <DialogTitle>{initialData ? "تعديل توريد الزيت" : "تسجيل توريد زيت جديد"}</DialogTitle>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute top-0 left-0"
+            onClick={() => onOpenChange(false)}
+            aria-label="إغلاق"
+          >
+            <X className="size-4" />
+          </Button>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="grid grid-cols-2 gap-4">

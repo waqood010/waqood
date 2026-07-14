@@ -4,7 +4,7 @@ import { db, pool } from "@/lib/db"
 import { fuelSupplies, fuelSupplyDistributions, tanks, stations, fuelTypes } from "@/lib/db/schema"
 import { eq, desc, asc, and, gte, lte, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
-import { requireUserId } from "@/lib/session"
+import { requireUserId, isAdminRole } from "@/lib/session"
 
 async function getFuelSupplyLegacyColumns() {
   const result = await pool.query(
@@ -556,7 +556,7 @@ export async function createFuelSupply(data: {
 // ─── Delete (admin only) ─────────────────────────────────────────────────────
 
 export async function deleteFuelSupply(id: number, role: string) {
-  if (role !== "admin") throw new Error("غير مصرح لك بهذا الإجراء")
+  if (!isAdminRole(role)) throw new Error("غير مصرح لك بهذا الإجراء")
 
   const supply = await db.query.fuelSupplies.findFirst({
     where: eq(fuelSupplies.id, id),

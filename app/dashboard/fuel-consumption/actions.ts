@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import { fuelConsumption, tankMeasurements, tanks, stations, fuelTypes } from "@/lib/db/schema"
 import { eq, desc, and, gte, lte } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
-import { requireUserId } from "@/lib/session"
+import { requireUserId, isAdminRole } from "@/lib/session"
 
 // ─── Lookups ────────────────────────────────────────────────────────────────
 
@@ -152,7 +152,7 @@ export async function createFuelConsumption(data: {
 // ─── Delete (admin only) ─────────────────────────────────────────────────────
 
 export async function deleteFuelConsumption(id: number, role: string) {
-  if (role !== "admin") throw new Error("غير مصرح لك بهذا الإجراء")
+  if (!isAdminRole(role)) throw new Error("غير مصرح لك بهذا الإجراء")
 
   const consumption = await db.query.fuelConsumption.findFirst({
     where: eq(fuelConsumption.id, id),

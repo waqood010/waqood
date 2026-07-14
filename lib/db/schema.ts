@@ -10,7 +10,7 @@ export const user = pgTable("user", {
   emailVerified: boolean("emailVerified").notNull().default(false),
   image: text("image"),
   // App-specific fields managed via Better Auth additionalFields
-  role: text("role").notNull().default("user"), // "admin" | "user"
+  role: text("role").notNull().default("user"), // "superadmin" | "admin" | "user"
   phone: text("phone"),
   username: text("username").unique(),
   displayUsername: text("displayUsername"),
@@ -87,6 +87,7 @@ export const tanks = pgTable("tanks", {
   fuelTypeId: integer("fuel_type_id").notNull(),
   capacityTon: doublePrecision("capacity_ton").notNull().default(0),
   capacityLiter: doublePrecision("capacity_liter").notNull().default(0),
+  startupBalance: doublePrecision("startup_balance").notNull().default(0), // الرصيد الابتدائي باللتر
   currentBalance: doublePrecision("current_balance").notNull().default(0), // باللتر
   minAlertLevel: doublePrecision("min_alert_level").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -181,6 +182,20 @@ export const oils = pgTable("oils", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 
+// تحليل عينات الزيوت
+export const oilSampleAnalyses = pgTable("oil_sample_analyses", {
+  id: serial("id").primaryKey(),
+  oilId: integer("oil_id").notNull().references(() => oils.id),
+  analysisNumber: text("analysis_number").notNull(),
+  analysisDate: timestamp("analysis_date").notNull().defaultNow(),
+  resultDate: timestamp("result_date"),
+  status: text("status").notNull().default("review"), // review | matched | unmatched
+  cost: doublePrecision("cost").notNull().default(0),
+  notes: text("notes"),
+  userId: text("userId").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+})
+
 // توريدات الزيوت
 export const oilSupplies = pgTable("oil_supplies", {
   id: serial("id").primaryKey(),
@@ -243,6 +258,23 @@ export const alerts = pgTable("alerts", {
   level: text("level").notNull().default("low"), // low | medium | high | critical
   category: text("category"), // fuel | oil | measurement | consumption
   isRead: boolean("is_read").notNull().default(false),
+  relatedTaskId: integer("related_task_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+})
+
+// قائمة المهام
+export const tasks = pgTable("tasks", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  dueDate: timestamp("due_date").notNull(),
+  repeatFrequency: text("repeat_frequency").notNull().default("once"), // once | daily | weekly | monthly | quarterly | yearly
+  reminderOffsetDays: integer("reminder_offset_days").notNull().default(1),
+  reminderIntervalHours: integer("reminder_interval_hours").notNull().default(24),
+  nextReminderAt: timestamp("next_reminder_at").notNull().defaultNow(),
+  status: text("status").notNull().default("pending"), // pending | in_progress | done
+  isRead: boolean("is_read").notNull().default(false),
+  userId: text("userId").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 

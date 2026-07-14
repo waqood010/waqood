@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Trash2, Search, Plus, Edit3, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { confirmModal } from "@/components/ui/confirm"
 import type { Station, Tank } from "@/components/shared/station-tank-selector"
 
 export function FuelSuppliesTable({
@@ -56,7 +57,7 @@ export function FuelSuppliesTable({
   }, [fromDate, toDate, selectedStationId])
 
   const handleDelete = async (id: number) => {
-    if (!confirm("هل أنت متأكد من حذف هذا السجل؟ سيتم استرداد الكميات من الخزانات.")) return
+    if (!(await confirmModal("هل أنت متأكد من حذف هذا السجل؟ سيتم استرداد الكميات من الخزانات."))) return
     try {
       await deleteFuelSupply(id, isAdmin ? "admin" : "user")
       setData(data.filter((d) => d.id !== id))

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Edit, Trash2, Search, Plus, Droplets } from "lucide-react"
 import { toast } from "sonner"
+import { confirmModal } from "@/components/ui/confirm"
 import { cn } from "@/lib/utils"
 
 export function OilsTable({ initialData, isAdmin }: { initialData: any[], isAdmin: boolean }) {
@@ -16,13 +17,15 @@ export function OilsTable({ initialData, isAdmin }: { initialData: any[], isAdmi
   const [editingItem, setEditingItem] = useState<any>(null)
 
   const handleDelete = async (id: number) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الصنف؟ لا يمكن التراجع عن هذا الإجراء.")) return
+    if (!(await confirmModal("هل أنت متأكد من حذف هذا الصنف؟ لا يمكن التراجع عن هذا الإجراء."))) return
     try {
       await deleteOil(id, isAdmin ? "admin" : "user")
       setData(data.filter((d) => d.id !== id))
       toast.success("تم الحذف بنجاح")
     } catch (err: any) {
-      toast.error(err.message || "فشل في الحذف")
+      const message = err?.message || err?.toString?.() || "فشل في الحذف"
+      console.error("Oil delete failed:", err)
+      toast.error(message)
     }
   }
 

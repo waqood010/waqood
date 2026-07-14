@@ -6,6 +6,7 @@ import { FuelTypeForm } from "./fuel-type-form"
 import { Button } from "@/components/ui/button"
 import { Edit, Trash2, Plus } from "lucide-react"
 import { toast } from "sonner"
+import { confirmModal } from "@/components/ui/confirm"
 
 export function FuelTypesTable({ initialData }: { initialData: any[] }) {
   const [data, setData] = useState(initialData)
@@ -13,7 +14,7 @@ export function FuelTypesTable({ initialData }: { initialData: any[] }) {
   const [editingItem, setEditingItem] = useState<any>(null)
 
   const handleDelete = async (id: number) => {
-    if (!confirm("هل أنت متأكد من حذف هذا النوع من الوقود؟ سيؤثر ذلك على الخزانات والتقارير المرتبطة.")) return
+    if (!(await confirmModal("هل أنت متأكد من حذف هذا النوع من الوقود؟ سيؤثر ذلك على الخزانات والتقارير المرتبطة."))) return
     try {
       await deleteFuelType(id)
       setData(data.filter((d) => d.id !== id))

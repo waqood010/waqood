@@ -5,7 +5,7 @@ import { Users } from "lucide-react"
 
 export default async function ConsumersPage() {
   const session = await getSession()
-  const isAdmin = session?.user?.role === "admin"
+  const isAdmin = session?.user?.role !== "user"
 
   const initialData = await getConsumers()
   const { oils } = await getConsumersWithRatesAndOils()

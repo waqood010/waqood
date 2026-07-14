@@ -3,6 +3,10 @@ import { getSession } from "@/lib/session"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/dashboard/app-sidebar"
 import { TopBar } from "@/components/dashboard/top-bar"
+import { getTaskNotificationCount } from "@/app/dashboard/tasks/actions"
+import { db } from "@/lib/db"
+import { alerts } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 
 export default async function DashboardLayout({
   children,
@@ -17,6 +21,12 @@ export default async function DashboardLayout({
   }
 
   const role = session.user.role as string
+  const [alertCountResult, taskCount] = await Promise.all([
+    db.select({ count: db.sql<number>`count(*)` }).from(alerts).where(eq(alerts.isRead, false)),
+    getTaskNotificationCount(),
+  ])
+  const unreadAlerts = Number(alertCountResult[0]?.count || 0)
+  const notificationCount = unreadAlerts + Number(taskCount || 0)
 
   return (
     <SidebarProvider defaultOpen={true}>

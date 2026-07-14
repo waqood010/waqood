@@ -5,7 +5,7 @@ import { Fuel } from "lucide-react"
 
 export default async function FuelConsumptionPage() {
   const session = await getSession()
-  const isAdmin = session?.user?.role === "admin"
+  const isAdmin = session?.user?.role !== "user"
 
   // Default dates: From the 1st of the current month to today
   const now = new Date()

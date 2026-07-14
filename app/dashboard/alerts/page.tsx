@@ -8,7 +8,7 @@ import { ar } from "date-fns/locale"
 
 export default async function AlertsPage() {
   const session = await getSession()
-  const isAdmin = session?.user?.role === "admin"
+  const isAdmin = session?.user?.role !== "user"
 
   const allAlerts = await db.select().from(alerts).orderBy(desc(alerts.createdAt))
 

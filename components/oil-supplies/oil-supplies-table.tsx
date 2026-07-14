@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Trash2, Search, Plus, Edit3, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { confirmModal } from "@/components/ui/confirm"
 import { format } from "date-fns"
 import { ar } from "date-fns/locale"
 
@@ -21,6 +22,7 @@ export function OilSuppliesTable({
 }) {
   const [data, setData] = useState(initialData)
   const [search, setSearch] = useState("")
+  const [oilFilter, setOilFilter] = useState("")
   const [formOpen, setFormOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
   const [fromDate, setFromDate] = useState("")
@@ -49,7 +51,7 @@ export function OilSuppliesTable({
   }, [fromDate, toDate])
 
   const handleDelete = async (id: number) => {
-    if (!confirm("هل أنت متأكد من حذف عملية التوريد هذه؟")) return
+    if (!(await confirmModal("هل أنت متأكد من حذف عملية التوريد هذه؟"))) return
     try {
       await deleteOilSupply(id)
       setData(data.filter((d) => d.id !== id))
@@ -70,12 +72,17 @@ export function OilSuppliesTable({
     await loadData()
   }
 
-  const filteredData = data.filter((d) => 
-    d.supplier?.includes(search) || 
-    d.oilName.includes(search) ||
-    d.contractNumber?.includes(search) ||
-    (d.invoiceNumber && d.invoiceNumber.includes(search))
-  )
+  const filteredData = data.filter((d) => {
+    const searchMatch =
+      d.supplier?.includes(search) ||
+      d.oilName.includes(search) ||
+      d.contractNumber?.includes(search) ||
+      (d.invoiceNumber && d.invoiceNumber.includes(search))
+
+    const oilMatch = oilFilter ? d.oilId === Number(oilFilter) : true
+
+    return searchMatch && oilMatch
+  })
 
   const totalQuantity = filteredData.reduce((sum, d) => sum + d.quantity, 0)
   const totalPrice = filteredData.reduce((sum, d) => sum + d.price, 0)
@@ -106,21 +113,49 @@ export function OilSuppliesTable({
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 w-full sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 sm:flex-none sm:max-w-xs">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              placeholder="بحث بالمورد أو الصنف أو الفاتورة..."
-              className="pr-9"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <div className="grid gap-4 w-full sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="min-w-0 relative">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="بحث بالمورد أو رقم الفاتورة أو رقم العقد..."
+                className="pr-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="min-w-0">
+              <select
+                value={oilFilter}
+                onChange={(e) => setOilFilter(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-right"
+              >
+                <option value="">جميع الأصناف</option>
+                {oils.map((oil) => (
+                  <option key={oil.id} value={oil.id.toString()}>
+                    {oil.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="min-w-0">
+              <Input
+                readOnly
+                value={oilFilter ? oils.find((oil) => oil.id.toString() === oilFilter)?.name || "" : ""
+                }
+                placeholder="الصنف المحدد"
+                className="cursor-not-allowed bg-muted/20"
+              />
+            </div>
           </div>
-          {isAdmin && (
-            <Button onClick={() => { setEditingItem(null); setFormOpen(true) }}>
-              <Plus className="ml-2 size-4" /> إضافة توريد
-            </Button>
-          )}
+
+          <div className="flex justify-start sm:justify-end">
+            {isAdmin && (
+              <Button onClick={() => { setEditingItem(null); setFormOpen(true) }}>
+                <Plus className="ml-2 size-4" /> إضافة توريد
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Edit, Trash2, Search, Plus, Users, ChevronDown, ChevronUp, Loader2, X } from "lucide-react"
 import { toast } from "sonner"
+import { confirmModal } from "@/components/ui/confirm"
 import { format } from "date-fns"
 import { ar } from "date-fns/locale"
 
@@ -47,7 +48,7 @@ export function ConsumersTable({ initialData, oils, isAdmin }: { initialData: an
   const [isEditingRate, setIsEditingRate] = useState(false)
 
   const handleDeleteConsumer = async (id: number) => {
-    if (!confirm("هل أنت متأكد من حذف هذه الجهة؟")) return
+    if (!(await confirmModal("هل أنت متأكد من حذف هذه الجهة؟"))) return
     try {
       await deleteConsumer(id, isAdmin ? "admin" : "user")
       setData(data.filter((d) => d.id !== id))
@@ -147,7 +148,7 @@ export function ConsumersTable({ initialData, oils, isAdmin }: { initialData: an
   }
 
   const handleDeleteRate = async (rateId: number) => {
-    if (!confirm("هل أنت متأكد من حذف هذا المعدل؟")) return
+    if (!(await confirmModal("هل أنت متأكد من حذف هذا المعدل؟"))) return
 
     try {
       await deleteOilRate(rateId, isAdmin ? "admin" : "user")
@@ -187,13 +188,13 @@ export function ConsumersTable({ initialData, oils, isAdmin }: { initialData: an
 
       <div className="rounded-md border border-border bg-card overflow-hidden">
         <div className="w-full overflow-x-auto">
-          <table className="w-full text-sm text-right">
+          <table className="min-w-full text-sm text-right">
             <thead className="bg-secondary/50 text-muted-foreground border-b border-border text-right">
               <tr>
                 <th className="px-4 py-3 font-medium"></th>
                 <th className="px-4 py-3 font-medium">الجهة المستهلكة</th>
                 <th className="px-4 py-3 font-medium">ملاحظات</th>
-                {isAdmin && <th className="px-4 py-3 font-medium text-left">الإجراءات</th>}
+                {isAdmin && <th className="px-4 py-3 font-medium">الإجراءات</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -205,8 +206,8 @@ export function ConsumersTable({ initialData, oils, isAdmin }: { initialData: an
                 </tr>
               ) : (
                 filteredData.map((item) => (
-                  <tbody key={item.id}>
-                    <tr className="hover:bg-muted/50 transition-colors">
+                  <>
+                    <tr key={item.id} className="hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-3 text-center">
                         <Button
                           size="icon"
@@ -227,11 +228,11 @@ export function ConsumersTable({ initialData, oils, isAdmin }: { initialData: an
                         <Users className="size-4 text-primary" />
                         {item.name}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                      <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">
                         {item.notes || "-"}
                       </td>
                       {isAdmin && (
-                        <td className="px-4 py-3 text-left">
+                        <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-2">
                             <Button size="icon" variant="ghost" onClick={() => { setEditingConsumer(item); setFormOpen(true) }}>
                               <Edit className="size-4 text-muted-foreground" />
@@ -469,7 +470,7 @@ export function ConsumersTable({ initialData, oils, isAdmin }: { initialData: an
                         </td>
                       </tr>
                     )}
-                  </tbody>
+                  </>
                 ))
               )}
             </tbody>

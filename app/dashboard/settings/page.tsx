@@ -7,6 +7,7 @@ import { redirect } from "next/navigation"
 import { FuelTypesTable } from "@/components/settings/fuel-types-table"
 import { UsersTable } from "@/components/settings/users-table"
 import { ChangePasswordForm } from "@/components/settings/change-password-form"
+import { formatArabicDate } from "@/lib/date"
 
 export default async function SettingsPage() {
   const session = await getSession()
@@ -100,7 +101,7 @@ export default async function SettingsPage() {
                       <td className="p-4 font-semibold">{s.settingValue || "-"}</td>
                       <td className="p-4 text-muted-foreground">{s.description || "-"}</td>
                       <td className="p-4 text-muted-foreground text-xs" dir="ltr">
-                        {new Date(s.updatedAt).toLocaleDateString("ar-EG")}
+                        {formatArabicDate(s.updatedAt)}
                       </td>
                     </tr>
                   ))}

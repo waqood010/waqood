@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { auditLog } from "@/lib/db/schema"
 import { desc } from "drizzle-orm"
 import { redirect } from "next/navigation"
+import { formatArabicDateTime } from "@/lib/date"
 
 const ACTION_LABELS: Record<string, { label: string; className: string }> = {
   create: { label: "إضافة", className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
@@ -81,7 +82,7 @@ export default async function AuditLogPage() {
                   return (
                     <tr key={log.id} className="hover:bg-muted/50 transition-colors">
                       <td className="p-4 align-middle font-mono text-xs" dir="ltr">
-                        {new Date(log.createdAt).toLocaleString("ar-EG")}
+                        {formatArabicDateTime(log.createdAt)}
                       </td>
                       <td className="p-4 align-middle font-medium">{log.userName || "غير معروف"}</td>
                       <td className="p-4 align-middle">

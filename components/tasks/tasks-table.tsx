@@ -5,9 +5,16 @@ import { deleteTask, acknowledgeTaskReminder, changeTaskStatus } from "@/app/das
 import { TaskForm } from "./task-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Edit, Trash2, CheckCircle2, Pause, BellRing, Plus } from "lucide-react"
+import { Edit, Trash2, CheckCircle2, Pause, BellRing, Plus, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { confirmModal } from "@/components/ui/confirm"
+import { formatArabicDate, formatArabicDateTime } from "@/lib/date"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
 
 const statusLabel = {
   pending: "معلقة",
@@ -27,6 +34,16 @@ const repeatLabel = {
 type TaskStatus = "pending" | "in_progress" | "done"
 type TaskRepeat = "once" | "daily" | "weekly" | "monthly" | "quarterly" | "yearly"
 
+const repeatFilters: { value: "all" | TaskRepeat; label: string }[] = [
+  { value: "all", label: "كل التكرارات" },
+  { value: "daily", label: "مهام يومية" },
+  { value: "weekly", label: "مهام أسبوعية" },
+  { value: "monthly", label: "مهام شهرية" },
+  { value: "quarterly", label: "مهام ربع سنوية" },
+  { value: "yearly", label: "مهام سنوية" },
+  { value: "once", label: "مرة واحدة" },
+]
+
 type TaskItem = {
   id: number
   title: string
@@ -43,15 +60,21 @@ type TaskItem = {
 export function TasksTable({ initialData }: { initialData: TaskItem[] }) {
   const [data, setData] = useState<TaskItem[]>(initialData)
   const [search, setSearch] = useState("")
+  const [repeatFilter, setRepeatFilter] = useState<"all" | TaskRepeat>("all")
   const [formOpen, setFormOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<TaskItem | null>(null)
 
   const now = new Date()
-  const filteredData = data.filter((item) =>
-    item.title.includes(search) ||
-    item.description?.includes(search) ||
-    statusLabel[item.status].includes(search)
-  )
+  const filteredData = data.filter((item) => {
+    const matchesSearch =
+      item.title.includes(search) ||
+      item.description?.includes(search) ||
+      statusLabel[item.status].includes(search)
+    const matchesRepeat =
+      repeatFilter === "all" || item.repeatFrequency === repeatFilter
+
+    return matchesSearch && matchesRepeat
+  })
 
   const handleDelete = async (id: number) => {
     if (!(await confirmModal("هل أنت متأكد من حذف هذه المهمة؟"))) return
@@ -99,6 +122,28 @@ export function TasksTable({ initialData }: { initialData: TaskItem[] }) {
         </Button>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2" aria-label="تصفية المهام حسب التكرار">
+        <span className="text-sm font-medium text-muted-foreground">التكرار:</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              {repeatFilters.find(f => f.value === repeatFilter)?.label || 'كل التكرارات'}
+              <ChevronDown className="mr-2 size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {repeatFilters.map((filter) => (
+              <DropdownMenuItem
+                key={filter.value}
+                onClick={() => setRepeatFilter(filter.value)}
+              >
+                {filter.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <div className="rounded-md border border-border bg-card overflow-x-auto">
         <table className="w-full text-sm text-right">
           <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
@@ -129,7 +174,7 @@ export function TasksTable({ initialData }: { initialData: TaskItem[] }) {
                       <div className="font-semibold">{item.title}</div>
                       {item.description && <div className="text-muted-foreground text-sm mt-1 line-clamp-2">{item.description}</div>}
                     </td>
-                    <td className="px-4 py-3">{new Date(item.dueDate).toLocaleDateString("ar-EG")}</td>
+                    <td className="px-4 py-3" dir="ltr">{formatArabicDate(item.dueDate)}</td>
                     <td className="px-4 py-3">{repeatLabel[item.repeatFrequency] || "غير محدد"}</td>
                     <td className="px-4 py-3">قبل {item.reminderOffsetDays} يوم</td>
                     <td className="px-4 py-3">
@@ -139,7 +184,7 @@ export function TasksTable({ initialData }: { initialData: TaskItem[] }) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
-                        <span>{new Date(item.nextReminderAt).toLocaleString("ar-EG")}</span>
+                        <span dir="ltr">{formatArabicDateTime(item.nextReminderAt)}</span>
                         {isReminderActive && (
                           <span className="text-[11px] font-semibold uppercase tracking-wide text-destructive">تنبيه نشط</span>
                         )}

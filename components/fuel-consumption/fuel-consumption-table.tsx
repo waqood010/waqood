@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Trash2, Search, Plus, Loader2, Edit2 } from "lucide-react"
 import { toast } from "sonner"
 import { confirmModal } from "@/components/ui/confirm"
+import { formatArabicDate } from "@/lib/date"
 import type { Station, Tank } from "@/components/shared/station-tank-selector"
 
 export function FuelConsumptionTable({
@@ -238,7 +239,7 @@ export function FuelConsumptionTable({
                   const totalForTank = tankTotals[row.tank.id] || 0
                   return (
                     <tr key={row.id} className="hover:bg-muted/50 transition-colors">
-                      <td className="px-4 py-3" dir="ltr">{new Date(row.date).toLocaleDateString("en-GB")}</td>
+                      <td className="px-4 py-3" dir="ltr">{formatArabicDate(row.date)}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
                           <span className="font-medium">{row.station.name}</span>

@@ -125,6 +125,22 @@ export async function GET() {
       name: "Add next_refill_date to oil_consumption_rates",
       query: `ALTER TABLE oil_consumption_rates ADD COLUMN IF NOT EXISTS next_refill_date TIMESTAMP;`
     },
+    {
+      name: "Add status to oil_transactions",
+      query: `ALTER TABLE oil_transactions ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'approved';`
+    },
+    {
+      name: "Add rejection_reason to oil_transactions",
+      query: `ALTER TABLE oil_transactions ADD COLUMN IF NOT EXISTS rejection_reason TEXT;`
+    },
+    {
+      name: "Add rejected_by to oil_transactions",
+      query: `ALTER TABLE oil_transactions ADD COLUMN IF NOT EXISTS rejected_by TEXT;`
+    },
+    {
+      name: "Add rejected_at to oil_transactions",
+      query: `ALTER TABLE oil_transactions ADD COLUMN IF NOT EXISTS rejected_at TIMESTAMP;`
+    },
   ]
 
   for (const migration of migrations) {

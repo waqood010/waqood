@@ -16,8 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Edit, Trash2, Search, Plus, Users, ChevronDown, ChevronUp, Loader2, X } from "lucide-react"
 import { toast } from "sonner"
 import { confirmModal } from "@/components/ui/confirm"
-import { format } from "date-fns"
-import { ar } from "date-fns/locale"
+import { formatArabicDate } from "@/lib/date"
 
 const RATE_UNITS = ["عبوة", "لتر", "كيلو", "كرتونة", "برميل"]
 
@@ -340,7 +339,7 @@ export function ConsumersTable({ initialData, oils, isAdmin }: { initialData: an
                                             <p className="text-xs font-medium text-primary">معاد الصرف القادم</p>
                                             <p className="text-sm font-semibold" dir="ltr">
                                               {rate.nextRefillDate 
-                                                ? format(new Date(rate.nextRefillDate), 'dd MMM yyyy', { locale: ar })
+                                                ? formatArabicDate(rate.nextRefillDate)
                                                 : <span className="text-muted-foreground text-xs">لم يحدد</span>
                                               }
                                             </p>

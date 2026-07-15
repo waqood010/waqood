@@ -245,6 +245,10 @@ export const oilTransactions = pgTable("oil_transactions", {
   receiverRank: text("receiver_rank"),
   notes: text("notes"),
   userId: text("userId").notNull(),
+  status: text("status").notNull().default("approved"), // approved | pending | rejected
+  rejectionReason: text("rejection_reason"),
+  rejectedBy: text("rejected_by"),
+  rejectedAt: timestamp("rejected_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 

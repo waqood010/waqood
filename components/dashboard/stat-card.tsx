@@ -12,6 +12,7 @@ interface StatCardProps {
     label: string
     isPositive?: boolean
   }
+  breakdown?: Array<{ label: string; value: string }>
   className?: string
   iconClassName?: string
 }
@@ -22,6 +23,7 @@ export function StatCard({
   icon: Icon,
   description,
   trend,
+  breakdown,
   className,
   iconClassName,
 }: StatCardProps) {
@@ -54,6 +56,17 @@ export function StatCard({
             )}
             {description && <span>{description}</span>}
             {trend?.label && <span>{trend.label}</span>}
+          </div>
+        )}
+
+        {breakdown && breakdown.length > 0 && (
+          <div className="mt-4 space-y-2 pt-2 border-t border-border/40">
+            {breakdown.map((item, idx) => (
+              <div key={idx} className="flex justify-between text-xs">
+                <span className="text-muted-foreground">{item.label}</span>
+                <span className="font-medium">{item.value}</span>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>

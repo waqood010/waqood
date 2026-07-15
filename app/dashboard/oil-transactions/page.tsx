@@ -27,6 +27,7 @@ export default async function OilTransactionsPage({ searchParams }: { searchPara
   const fromParam = searchParams?.from ? new Date(searchParams.from as string) : from
   const toParam = searchParams?.to ? new Date(searchParams.to as string) : to
   const search = searchParams?.q ? String(searchParams.q) : undefined
+  const status = (searchParams?.status as "all" | "approved" | "pending" | "rejected" | undefined) || "all"
   const page = searchParams?.page ? Number(searchParams.page as string) : 1
   const pageSize = searchParams?.pageSize ? Number(searchParams.pageSize as string) : 25
 
@@ -36,6 +37,7 @@ export default async function OilTransactionsPage({ searchParams }: { searchPara
     from: fromParam,
     to: toParam,
     search,
+    status,
     page,
     pageSize,
   })

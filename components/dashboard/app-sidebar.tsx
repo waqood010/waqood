@@ -26,7 +26,7 @@ export function AppSidebar({ role }: { role: string }) {
   const pathname = usePathname()
   const [loadingHref, setLoadingHref] = React.useState<string | null>(null)
   const [isSigningOut, setIsSigningOut] = React.useState(false)
-  const { toggleSidebar, isMobile } = useSidebar()
+  const { toggleSidebar, isMobile, setOpenMobile } = useSidebar()
 
   React.useEffect(() => {
     setLoadingHref(null)
@@ -50,7 +50,6 @@ export function AppSidebar({ role }: { role: string }) {
             </SidebarMenuItem>
           </SidebarMenu>
 
-          {!isMobile && (
             <Button
               variant="ghost"
               size="icon"
@@ -60,7 +59,6 @@ export function AppSidebar({ role }: { role: string }) {
             >
               <X className="size-4" />
             </Button>
-          )}
         </div>
       </SidebarHeader>
 
@@ -92,6 +90,9 @@ export function AppSidebar({ role }: { role: string }) {
                           onClick={() => {
                             if (pathname !== item.href) {
                               setLoadingHref(item.href)
+                            }
+                            if (isMobile) {
+                              setOpenMobile(false)
                             }
                           }}
                         >

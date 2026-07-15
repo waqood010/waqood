@@ -191,12 +191,7 @@ export function TaskForm({
                 <option value="done">منتهية</option>
               </select>
             </div>
-            <div className="space-y-2">
-              <Label>الحالة الحالية</Label>
-              <div className="flex h-10 items-center rounded-lg border border-input bg-background px-3 text-sm text-right">
-                {status === "pending" ? "معلقة" : status === "in_progress" ? "جاري التنفيذ" : "منتهية"}
-              </div>
-            </div>
+           
           </div>
 
           <DialogFooter>

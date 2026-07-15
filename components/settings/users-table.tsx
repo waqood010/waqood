@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
+import { formatArabicDate } from "@/lib/date"
 
 export function UsersTable({ initialData, canCreate, isSuperAdmin }: { initialData: any[]; canCreate: boolean; isSuperAdmin?: boolean }) {
   const [users, setUsers] = useState(initialData)
@@ -137,7 +138,7 @@ export function UsersTable({ initialData, canCreate, isSuperAdmin }: { initialDa
                   </td>
                   <td className="px-4 py-3 font-mono text-xs">{user.email}</td>
                   <td className="px-4 py-3 font-mono text-xs" dir="ltr">
-                    {new Date(user.createdAt).toLocaleDateString("ar-EG")}
+                    {formatArabicDate(user.createdAt)}
                   </td>
                 </tr>
               ))

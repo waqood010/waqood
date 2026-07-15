@@ -5,6 +5,7 @@ import { getSupplyDistributions } from "@/app/dashboard/fuel-supplies/actions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { formatArabicDate } from "@/lib/date"
 
 export function SupplyDetailsModal({
   supply,
@@ -61,7 +62,7 @@ export function SupplyDetailsModal({
             <div>
               <div className="text-xs text-muted-foreground mb-1">التاريخ</div>
               <div className="font-semibold" dir="ltr">
-                {new Date(supply.date).toLocaleDateString("en-GB")}
+                {formatArabicDate(supply.date)}
               </div>
             </div>
             <div>

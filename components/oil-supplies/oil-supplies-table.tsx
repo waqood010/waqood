@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Trash2, Search, Plus, Edit3, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { confirmModal } from "@/components/ui/confirm"
-import { format } from "date-fns"
-import { ar } from "date-fns/locale"
+import { formatArabicDate } from "@/lib/date"
 
 export function OilSuppliesTable({ 
   initialData, 
@@ -198,7 +197,7 @@ export function OilSuppliesTable({
                   {filteredData.map((item) => (
                     <tr key={item.id} className="hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-3 font-medium">
-                        {item.date ? format(new Date(item.date), 'dd MMMM yyyy', { locale: ar }) : "-"}
+                        {item.date ? formatArabicDate(item.date) : "-"}
                       </td>
                       <td className="px-4 py-3">{item.oilName}</td>
                       <td className="px-4 py-3 text-center text-xs">

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Trash2, Search, Plus, Edit3, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { confirmModal } from "@/components/ui/confirm"
+import { formatArabicDate } from "@/lib/date"
 import type { Station, Tank } from "@/components/shared/station-tank-selector"
 
 export function FuelSuppliesTable({
@@ -205,7 +206,7 @@ export function FuelSuppliesTable({
                       </div>
                     </td>
                     <td className="px-4 py-3" dir="ltr">
-                      {new Date(row.date).toLocaleDateString("en-GB")}
+                      {formatArabicDate(row.date)}
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">

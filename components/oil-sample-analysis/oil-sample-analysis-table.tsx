@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Edit, Trash2, Search, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { confirmModal } from "@/components/ui/confirm"
+import { formatArabicDate } from "@/lib/date"
 
 export function OilSampleAnalysisTable({ initialData, oils, isAdmin }: { initialData: any[]; oils: any[]; isAdmin: boolean }) {
   const [data, setData] = useState(initialData)
@@ -77,8 +78,8 @@ export function OilSampleAnalysisTable({ initialData, oils, isAdmin }: { initial
                 <tr key={item.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-4 py-3">{item.analysisNumber}</td>
                   <td className="px-4 py-3">{item.oilName}</td>
-                  <td className="px-4 py-3">{new Date(item.analysisDate).toLocaleDateString()}</td>
-                  <td className="px-4 py-3">{item.resultDate ? new Date(item.resultDate).toLocaleDateString() : "-"}</td>
+                  <td className="px-4 py-3">{formatArabicDate(item.analysisDate)}</td>
+                  <td className="px-4 py-3">{item.resultDate ? formatArabicDate(item.resultDate) : "-"}</td>
                   <td className="px-4 py-3">{item.status === "review" ? "تحت المراجعة" : item.status === "matched" ? "مطابق" : "غير مطابق"}</td>
                   <td className="px-4 py-3" dir="ltr">{item.cost.toLocaleString()}</td>
                   <td className="px-4 py-3 text-muted-foreground">{item.notes || "-"}</td>
